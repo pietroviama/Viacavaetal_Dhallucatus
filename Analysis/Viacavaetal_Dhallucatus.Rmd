@@ -7,8 +7,6 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = 'C:/Users/pietro/Desktop/Pietro/Specimens', echo = TRUE)
-
 #load libraries
 
 library(geomorph)
@@ -27,7 +25,7 @@ library(landvR)
 
 ```{r load data}
 #Import 3D coordinates from all specimens
-coords.3D <- t (read.csv("Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
+coords.3D <- t (read.csv("../Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
 
 
 #Convert 2D metadata into a 3D array
@@ -36,7 +34,7 @@ dim(A) #check dimensions of 3D array (number of specimens in z)
 Ahead <- head(dimnames(A))[3] #specimen names
 
 #Load the classifier
-quollsdata <- read.csv("C:/Users/pietro/Desktop/Pietro/Specimens/Dhallucatus_data.csv", header=T)
+quollsdata <- read.csv("../Data/Dhallucatus_data.csv", header=T)
 Data.pops <- quollsdata$Population
 is.factor(Data.pops) # check that it is a factor
 
