@@ -1,0 +1,512 @@
+---
+title: "Viacavaetal_Dhallucatus_cranialdivergence"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/pietro/Desktop/Pietro/Specimens', echo = TRUE)
+
+#load libraries
+
+library(geomorph)
+library(ggplot2)
+library(vegan)
+
+if(!require(devtools)) install.packages("devtools")
+library(devtools)
+devtools::install_github("TGuillerme/landvR")
+library(landvR)
+
+
+```
+
+
+
+```{r load data}
+#Import 3D coordinates from all specimens
+coords.3D <- t (read.csv("Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
+
+
+#Convert 2D metadata into a 3D array
+A <- arrayspecs(coords.3D, 900, 3)
+dim(A) #check dimensions of 3D array (number of specimens in z)
+Ahead <- head(dimnames(A))[3] #specimen names
+
+#Load the classifier
+quollsdata <- read.csv("C:/Users/pietro/Desktop/Pietro/Specimens/Dhallucatus_data.csv", header=T)
+Data.pops <- quollsdata$Population
+is.factor(Data.pops) # check that it is a factor
+
+
+#give museum ID row names to quolls data
+rownames(quollsdata)<-quollsdata$Museum_ID
+
+####Rearrange coordinate names and classifier file names in the same order
+
+names_array <- dimnames(A)[[3]]
+names_classifier <- rownames(quollsdata)
+match(names_array, names_classifier)
+A_reorder <- A[,,match(names_classifier, names_array)]
+
+
+names_Areorder <- dimnames(A_reorder)[[3]]
+match(names_Areorder, names_classifier)
+
+#subset Dasyurus hallucatus
+
+Dhallucatuscoords <- A_reorder[,,-which(quollsdata$Population=="Other species")]
+
+Dhallucatusdata <- quollsdata[-which(quollsdata$Population=='Other species'),] 
+Dhallucatusdata <- droplevels(Dhallucatusdata)
+
+#check that specimens ID in coords array mirror specimen ID in classifier file
+dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
+```
+
+```{r Generalized Procrustes Analyses, extraction of climatic variables and dataframing for geomorph, include=TRUE}
+
+
+#Generalized Procrustes Analysis on all Dasyurus hallucatus specimens
+
+gpahallucatus<-gpagen(Dhallucatuscoords, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+rclim<- getData("worldclim",var="bio",res=10) #run in console
+
+rclim <- rclim[[c(1,12)]]
+names(rclim) <- c("Temp","Prec")
+
+lons <- Dhallucatusdata$Longitude
+lats <- Dhallucatusdata$Latitude
+
+coordsgps <- data.frame(lons, lats)
+
+valuestemp <- extract(rclim,coordsgps)
+
+Dhallucatusworldclim <- cbind.data.frame(coordsgps,valuestemp)
+
+gdfhallucatus <- geomorph.data.frame(gpahallucatus, Population = Dhallucatusdata$Population, 
+                           Sex = Dhallucatusdata$Sex, MuseumID = Dhallucatusdata$Museum_ID, Latitude = Dhallucatusdata$Latitude, 
+                           Longitude = Dhallucatusdata$Longitude, main_island = Dhallucatusdata$Island_Mainland, IBRA = Dhallucatusdata$IBRA_7_Regions,
+                           Datcoll = Dhallucatusdata$Date_collected, conservationstatus = Dhallucatusdata$Conservation_status,
+                           Aridity = Dhallucatusdata$Aridity_index, precipitation = Dhallucatusdata$Precipitation, 
+                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, climate = Dhallucatusdata$Climate_classification,
+                           ppworldclim = Dhallucatusworldclim$Prec, tempworldclim = Dhallucatusworldclim$Temp, Species = Dhallucatusdata$Species)
+
+
+#subtracting island specimens (small sample size for population analysis) except Groote
+
+Dhallminusisland<-Dhallucatuscoords[,,-which(Dhallucatusdata$Population=="island")]
+
+Dhalldataminusisland <- Dhallucatusdata[-which(Dhallucatusdata$Population=="island"),]
+Dhalldataminusisland<-droplevels(Dhalldataminusisland)
+
+
+
+#Generalized Procrustes Analysis on all Dasyurus hallucatus specimens except Dolphin island specimens
+
+gpadhallminusisland <- gpagen(Dhallminusisland, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+
+#extract climatic variables
+
+rclim<- getData("worldclim",var="bio",res=10) #run in console
+
+rclim <- rclim[[c(1,12)]]
+names(rclim) <- c("Temp","Prec")
+
+lons <- Dhalldataminusisland$Longitude
+lats <- Dhalldataminusisland$Latitude
+
+coordsgps <- data.frame(lons, lats)
+
+valuestemp <- extract(rclim,coordsgps)
+
+Dhallucatusworldclimminusisland <- cbind.data.frame(coordsgps,valuestemp)
+
+#dataframe for geomorph
+
+gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population = Dhalldataminusisland$Population, 
+                           Sex = Dhalldataminusisland$Sex, MuseumID = Dhalldataminusisland$Museum_ID, Latitude = Dhalldataminusisland$Latitude, 
+                           Longitude = Dhalldataminusisland$Longitude, main_island = Dhalldataminusisland$Island_Mainland, IBRA = Dhalldataminusisland$IBRA_7_Regions,
+                           Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
+                           Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
+                           habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
+                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species) 
+```
+
+```{r morpological disparity differences between island populations and mainland populations, include=TRUE}
+
+morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
+
+```
+
+```{r morphological differences between populations, exploratory analysis PCA, include=TRUE}  
+
+PCAminusisland <- plotTangentSpace(gdfhallucatusminusisland$coords, warpgrids = FALSE, mesh = FALSE, groups = gdfhallucatusminusisland$Population, legend = TRUE)
+
+summary(PCAminusisland)
+
+
+PCAminusislandplot <- plot(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], bg = gdfhallucatusminusisland$Population, pch = 21, cex = 1.5, asp = T, xlab="Principal Component 1 (24.58%)", ylab="Principal Component 2 (11.58%)")
+legend("topright", legend=unique(gdfhallucatusminusisland$Population), pch=19, col=unique(gdfhallucatusminusisland$Population), cex=1.3) #run in console
+```
+
+``` {r Figure 1 shape changes associated to PC1 and allometry, include=TRUE} 
+#Figure 1a: shape changes associated to PC1 
+
+mshapePC1minmax<-coordinates.difference(PCAminusisland$pc.shapes$PC1min,PCAminusisland$pc.shapes$PC1max, type = "spherical")
+
+procrustes.var.plot(PCAminusisland$pc.shapes$PC1max, PCAminusisland$pc.shapes$PC1min, col = grDevices::heat.colors, col.val = mshapePC1minmax[[1]][,"radius"], pt.size = 0.7)
+
+
+#Figure 1b: shape changes associated to allometry 
+
+predshapesize <- shape.predictor(gpadhallminusisland$coords, x=gpadhallminusisland$Csize, Intercept = TRUE, predmin = min(gpadhallminusisland$Csize), predmax = max(gpadhallminusisland$Csize))
+
+allomshapediff <- coordinates.difference(predshapesize$predmin, predshapesize$predmax, type = "spherical")
+procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = grDevices::heat.colors, allomshapediff[[1]][,"radius"], pt.size = 0.7)
+
+```
+
+``` {r Procrustes ANOVA and pairwise comparisons between shape and centroid size means of each population, include=TRUE}
+
+fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population)
+summary(fit1)
+PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
+
+summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+
+fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population)
+summary(fit2)
+PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
+
+summary(PW2, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+```
+
+```{r Figure 2: Heat plot visualizations of mean shape differences and residual mean shape differences between between populations,and distribution map of specimens used for this Figure with populations labelled, include=TRUE}
+
+#calculate mean shapes of each population 
+gpaPilbaracoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Pilbara")]
+mshapePilbara <- mshape(gpaPilbaracoords)
+class(mshapePilbara) <- "matrix"
+
+gpaNTcoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Northern Territory")]
+mshapeNT <- mshape(gpaNTcoords)
+class(mshapeNT) <- "matrix"
+
+gpaQLDcoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Queensland")]
+mshapeQLD <- mshape(gpaQLDcoords)
+class(mshapeQLD) <- "matrix"
+
+gpaKimberleycoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Kimberley")]
+mshapeKimberley <- mshape(gpaKimberleycoords)
+class(mshapeKimberley) <- "matrix"
+
+gpaGrootecoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Groote")]
+mshapeGroote <- mshape(gpaGrootecoords)
+class(mshapeGroote) <- "matrix"
+
+## Calculate the pairwise interlandmark differences among population mean shapes
+mshapegrootekimberley <- coordinates.difference(mshapeGroote, mshapeKimberley, type = "spherical")
+mshapegrootePilbara <- coordinates.difference(mshapeGroote, mshapePilbara, type = "spherical")
+mshapegrooteNT <- coordinates.difference(mshapeGroote, mshapeNT, type = "spherical")
+mshapegrooteQLD <- coordinates.difference(mshapeGroote, mshapeQLD, type = "spherical")
+mshapeQLDpilbara <- coordinates.difference(mshapeQLD, mshapePilbara, type = "spherical")
+mshapeQLDNT <- coordinates.difference(mshapeQLD, mshapeNT, type = "spherical")
+mshapeQLDKimberley <- coordinates.difference(mshapeQLD, mshapeKimberley, type = "spherical")
+mshapeNTKimberley <- coordinates.difference(mshapeNT, mshapeKimberley, type = "spherical")
+mshapeNTPilbara <- coordinates.difference(mshapeNT, mshapePilbara, type = "spherical")
+mshapeKimberleyPilbara <- coordinates.difference(mshapeKimberley, mshapePilbara, type = "spherical")
+
+
+## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
+procrustes.var.plot(mshapeGroote, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapegrootekimberley[[1]][,"radius"])
+procrustes.var.plot(mshapeGroote, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapegrootePilbara[[1]][,"radius"])
+procrustes.var.plot(mshapeGroote, mshapeNT, col = grDevices::heat.colors, col.val =  mshapegrooteNT[[1]][,"radius"])
+procrustes.var.plot(mshapeGroote, mshapeQLD, col = grDevices::heat.colors, col.val =  mshapegrooteQLD[[1]][,"radius"])
+procrustes.var.plot(mshapeQLD, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeQLDpilbara[[1]][,"radius"])
+procrustes.var.plot(mshapeQLD, mshapeNT, col = grDevices::heat.colors, col.val =  mshapeQLDNT[[1]][,"radius"])
+procrustes.var.plot(mshapeQLD, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapeQLDKimberley[[1]][,"radius"])
+procrustes.var.plot(mshapeNT, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapeNTKimberley[[1]][,"radius"])
+procrustes.var.plot(mshapeNT, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeNTPilbara[[1]][,"radius"])
+procrustes.var.plot(mshapeKimberley, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeKimberleyPilbara[[1]][,"radius"])
+
+###Distribution map of specimens used in this study labelled by population###
+
+#extract map of Australia border points
+
+world_map <- map_data("world")
+australia <- subset(world_map, world_map$region=="Australia")
+australia
+
+#create a base plot with ggplot2
+
+p <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+#Add map to base plot
+
+australia_messy <- p + geom_polygon(data=australia, aes(x=long, y=lat, group=group), 
+                                    colour="black", fill="white")
+
+australia_messy
+
+#clean up the map
+
+cleanup <- 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_rect(fill = 'white', colour = 'white'), 
+        axis.line = element_line(colour = "white"), legend.position="none",
+        axis.ticks=element_blank(), axis.text.x=element_blank(),
+        axis.text.y=element_blank())
+
+australia_clean <- australia_messy + cleanup
+
+australia_clean
+
+#plot data points in map
+
+australiamap_data <- 
+  australia_clean+
+  geom_point(data=Dhalldataminusisland, 
+             aes(x=Longitude, y=Latitude, fill =Population)
+            ,pch=21, size=7, alpha=I(0.7))+
+  theme(legend.position = c(1,0.8), legend.justification = c(0,1), legend.key = element_blank(), legend.title = element_text(size = 20),
+        legend.text = element_text(size = 18))+
+    labs(fill="Population")
+
+
+australiamap_data
+```
+
+```{r sexual dimorphism and allometry, data preparation of size-corrected shape, include=TRUE}
+
+#first drop unknown sex and redo gpa
+
+Sexdata <- Dhallucatusdata[-which(Dhallucatusdata$Sex=="unknown"),]
+Sexdata <- droplevels(Sexdata)
+
+coordssex <- Dhallucatuscoords[,,-which(Dhallucatusdata$Sex=="unknown")]
+
+gpasex<-gpagen(coordssex, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+gdfsex <- geomorph.data.frame(gpasex, Population = Sexdata$Population, 
+                           Sex = Sexdata$Sex, MuseumID = Sexdata$Museum_ID, Latitude = Sexdata$Latitude, 
+                           Longitude = Sexdata$Longitude, main_island = Sexdata$Island_Mainland, IBRA= Sexdata$IBRA_7_Regions,
+                           Datcoll = Sexdata$Date_collected, conservationstatus = Sexdata$Conservation_status,
+                           Aridity = Sexdata$Aridity_index, precipitation = Sexdata$Precipitation, 
+                           habitat = Sexdata$Forest_habitat, vegtype = Sexdata$Vegetation_type, climate = Sexdata$Climate_classification) 
+
+#PCA with sexes labelled
+
+PCAsex <- plotTangentSpace(gdfsex$coords, warpgrids = FALSE, mesh = NULL, groups = gdfsex$Sex, legend = TRUE)
+summary(PCAsex)
+
+plot(PCAsex$pc.scores[,1], PCAsex$pc.scores[,2], bg = gdfsex$Sex, pch = 21, cex = 2, asp = T)
+legend("bottomright", legend=unique(gdfsex$Sex), pch=19, col=unique(gdfsex$Sex), cex=0.75)
+
+#Are sexes different in shape?
+
+fit.shapesex <- procD.lm(coords~Sex, data = gdfsex)
+summary(fit.shapesex)
+
+#Is there allometry? How much shape differences between sexes there are after correcting for size?
+
+fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex)
+summary(fit.sex)
+
+#Is there a common allometry or are there unique allometries across sexes?
+
+fit.sex.uni <- procD.lm(f1 = coords~Csize*Sex, data = gdfsex)
+summary(fit.sex.uni)
+
+#Are sexes different in Centroid Size (proxy for size)?
+
+lmsizesex <- lm(gdfsex$Csize~gdfsex$Sex)
+summary(lmsizesex)
+
+
+#Here, we extract the residuals of allometry of each specimen and we add them up to the consensus shape obtained from GPA
+
+fit.size.sex <- procD.lm(f1 = coords~Csize, data = gdfsex, print.progress = FALSE)
+
+main_residuals3D.sex <- arrayspecs(fit.size.sex$residuals, 900, 3)
+
+allom_resplusconsensus.sex <- main_residuals3D.sex + array(gpasex$consensus,dim(main_residuals3D.sex))
+
+
+gparessex<-gpagen(allom_resplusconsensus.sex, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+gdfressex <- geomorph.data.frame(gparessex, Population = Sexdata$Population, 
+                           Sex = Sexdata$Sex, MuseumID = Sexdata$Museum_ID, Latitude = Sexdata$Latitude, 
+                           Longitude =Sexdata$Longitude)
+
+#Are sexes different in size-corrected shape? 
+
+fit1resshapesex <- procD.lm(coords~Sex, data = gdfressex, effect.type = "F")
+summary(fit1resshapesex) #Significant size-corrected shape differences between sexes, but very little
+
+
+#sexual shape differences between sexes, heatplot (Supplementary Figure 4)
+
+malecoords <- gpasex$coords[,,which(gdfsex$Sex=="male")]
+mshapemale <- mshape(malecoords)
+class(mshapemale) <- "matrix"
+femalecoords <- gpasex$coords[,,which(gdfsex$Sex=="female")]
+mshapefemale <- mshape(femalecoords) 
+class(mshapefemale) <- "matrix"
+
+mshapemalefemale <- coordinates.difference(mshapemale, mshapefemale, type = "spherical")
+
+procrustes.var.plot(mshapemale, mshapefemale, col = grDevices::heat.colors, col.val = mshapemalefemale[[1]][,"radius"], pt.size = 0.7)
+
+#size-corrected shape differences between sexes, heatplot (Supplementary Figure 4)
+
+malecoordsres <- gparessex$coords[,,which(gdfressex$Sex=="male")]
+mshapemaleres <- mshape(malecoordsres)
+class(mshapemaleres) <- "matrix"
+femalecoordsres <- gparessex$coords[,,which(gdfressex$Sex=="female")]
+mshapefemaleres <- mshape(femalecoordsres) 
+class(mshapefemaleres) <- "matrix"
+
+mshapemalefemaleres <- coordinates.difference(mshapemaleres, mshapefemaleres, type = "spherical")
+
+procrustes.var.plot(mshapemaleres, mshapefemaleres, col = grDevices::heat.colors, col.val = mshapemalefemaleres[[1]][,"radius"], pt.size = 0.7)
+
+
+###POPULATION ANALYSIS OF ALLOMETRY###
+
+
+#Is there allometry in the entire dataset and how much?
+
+fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatus, print.progress = FALSE)
+plotAllometry(fit.size, size = gdfhallucatus$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatus$Population))
+anova(fit.size)
+
+#Figure 3: Allometry plot, centroid size (proxy for body size) vs shape score
+
+#unique allometries by population?
+
+fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminusisland, print.progress = FALSE)
+plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
+anova(fit.size.uni)
+
+#common allometry across all populations?
+
+fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
+plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
+anova(fit.size.common)
+
+
+```
+
+``` {r variation partitioning analysis on mainland specimens, include = TRUE}
+
+# subtraction of island specimens, data preparation
+
+Mainlanddata <- Dhallucatusdata[-which(Dhallucatusdata$Island_Mainland=="island"),]
+Mainlanddata <- droplevels(Mainlanddata)
+
+coordsmainland <- Dhallucatuscoords[,,-which(Dhallucatusdata$Island_Mainland=="island")]
+
+gpamainland<-gpagen(coordsmainland, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+rclimmainland<- getData("worldclim",var="bio",res=10)
+
+rclimmainland <- rclimmainland[[c(1,12)]]
+names(rclimmainland) <- c("Temp","Prec")
+
+lonsmain <- Mainlanddata$Longitude
+latsmain <- Mainlanddata$Latitude
+
+coordsgpsmain <- data.frame(lonsmain, latsmain)
+
+valuesclimmain <- extract(rclimmainland,coordsgpsmain)
+
+Dhallucatusworldclimmain <- cbind.data.frame(coordsgpsmain,valuesclimmain)
+
+gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Population, 
+                           Sex = Mainlanddata$Sex, MuseumID = Mainlanddata$Museum_ID, Latitude = Mainlanddata$Latitude, 
+                           Longitude = Mainlanddata$Longitude, main_island = Mainlanddata$Island_Mainland, IBRA = Mainlanddata$IBRA_7_Regions,
+                           Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
+                           Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
+                           habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
+                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp) 
+
+#Perform a PCA to overcome autocorrelation issues that may arise from geographic distances
+
+specgeodist <- data.frame(gdfmainland$Latitude,gdfmainland$Longitude)
+mat.specgeodist <- dist(specgeodist, method="euclidean", diag=F, upper=F)
+pcnm <- pcnm(mat.specgeodist)
+
+sum(pcnm$values[1:10]/sum(pcnm$values[1:18]))
+
+spat.data<-pcnm$vectors[,1:10]
+
+array2mat <- function(array,inds,vars){
+  if(class(array)=="matrix"){array<-array(array,dim=c(nrow(array),ncol(array),1))}
+  X1 <-aperm(array,c(3,2,1))
+  dim(X1)<- c(inds, vars)
+  if(!is.null(dimnames(array)[3])){rownames(X1)<-unlist(dimnames(array)[3])}else{rownames(X1)<-c(1:nrow(X1))}
+  return(X1)
+}
+
+
+mymat<-array2mat(gpamainland$coords,89,2700)
+
+geo_rda<-vegan::rda(mymat~spat.data)
+anova(geo_rda)
+
+
+### Figure 4: full variation partitioning model, from vegan library, test for constrained variation
+
+mainprectemp <- data.frame(gdfmainland$precworldclim, gdfmainland$tempworldclim/10)
+
+matprectemp <- as.matrix(mainprectemp)
+
+matCsizemain <- gpamainland$Csize
+
+mod<-varpart(mymat,~spat.data, ~matCsizemain, ~matprectemp[,c(1:2)])
+
+showvarparts(3, bg = c("blue", "red", "black"))
+plot(mod, bg = c("blue", "red", "black"))
+
+full_rda<-vegan::rda(mymat~spat.data+matprectemp[,c(1:2)]+matCsizemain)### full model
+
+geo.rda<-vegan::rda(mymat~spat.data+Condition(matprectemp[,c(1:2)])+Condition(matCsizemain))### fraction variance of the variable
+
+clim_rda.shape<-vegan::rda(mymat~matprectemp[,c(1:2)]+Condition(spat.data)+Condition(matCsizemain))
+
+veg.rda.shape<-vegan::rda(mymat~matCsizemain+Condition(spat.data)+Condition(matprectemp[,c(1:2)]))
+
+
+Eclim<-vegan::rda(mymat~matprectemp[,c(1:2)])
+anova(Eclim)
+RsquareAdj(Eclim)
+
+Egeo<-vegan::rda(mymat~spat.data)
+anova(Egeo)
+RsquareAdj(Egeo)
+
+anova(full_rda)
+RsquareAdj(full_rda)
+
+anova(geo.rda)
+RsquareAdj(geo.rda)
+
+anova(clim_rda.shape)
+RsquareAdj(clim_rda.shape)
+
+anova(veg.rda.shape)
+RsquareAdj(veg.rda.shape)
+
+
+```
