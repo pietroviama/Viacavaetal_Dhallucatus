@@ -7,11 +7,17 @@ output:
 
 
 ```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/pietro/Desktop/Pietro/Specimens', echo = TRUE)
+
 #load libraries
 
+library(rgl)
+library(rlang)
 library(geomorph)
 library(ggplot2)
+library(raster)
 library(vegan)
+
 
 if(!require(devtools)) install.packages("devtools")
 library(devtools)
@@ -25,7 +31,7 @@ library(landvR)
 
 ```{r load data}
 #Import 3D coordinates from all specimens
-coords.3D <- t (read.csv("../Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
+coords.3D <- t (read.csv("Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
 
 
 #Convert 2D metadata into a 3D array
@@ -34,7 +40,7 @@ dim(A) #check dimensions of 3D array (number of specimens in z)
 Ahead <- head(dimnames(A))[3] #specimen names
 
 #Load the classifier
-quollsdata <- read.csv("../Data/Dhallucatus_data.csv", header=T)
+quollsdata <- read.csv("C:/Users/pietro/Desktop/Pietro/Specimens/Dhallucatus_data.csv", header=T)
 Data.pops <- quollsdata$Population
 is.factor(Data.pops) # check that it is a factor
 
@@ -475,16 +481,30 @@ matCsizemain <- gpamainland$Csize
 mod<-varpart(mymat,~spat.data, ~matCsizemain, ~matprectemp[,c(1:2)])
 
 showvarparts(3, bg = c("blue", "red", "black"))
-plot(mod, bg = c("blue", "red", "black"))
+plot(mod, bg = c("blue", "red", "black"), Xnames=c("Geography","Size","Climate"))
 
 full_rda<-vegan::rda(mymat~spat.data+matprectemp[,c(1:2)]+matCsizemain)### full model
 
-geo.rda<-vegan::rda(mymat~spat.data+Condition(matprectemp[,c(1:2)])+Condition(matCsizemain))### fraction variance of the variable
+geo.rda<-vegan::rda(mymat~spat.data+Condition(matprectemp[,c(1:2)])+Condition,(matCsizemain))### fraction variance of the variable
 
-clim_rda.shape<-vegan::rda(mymat~matprectemp[,c(1:2)]+Condition(spat.data)+Condition(matCsizemain))
+clim.rda.shape<-vegan::rda(mymat~matprectemp[,c(1:2)]+Condition(spat.data)+Condition(matCsizemain))
 
-veg.rda.shape<-vegan::rda(mymat~matCsizemain+Condition(spat.data)+Condition(matprectemp[,c(1:2)]))
+size.rda.shape<-vegan::rda(mymat~matCsizemain+Condition(spat.data)+Condition(matprectemp[,c(1:2)]))
 
+
+
+
+anova(full_rda)
+RsquareAdj(full_rda)
+
+anova(geo.rda)
+RsquareAdj(geo.rda)
+
+anova(clim.rda.shape)
+RsquareAdj(clim.rda.shape)
+
+anova(size.rda.shape)
+RsquareAdj(size.rda.shape)
 
 Eclim<-vegan::rda(mymat~matprectemp[,c(1:2)])
 anova(Eclim)
@@ -493,18 +513,5 @@ RsquareAdj(Eclim)
 Egeo<-vegan::rda(mymat~spat.data)
 anova(Egeo)
 RsquareAdj(Egeo)
-
-anova(full_rda)
-RsquareAdj(full_rda)
-
-anova(geo.rda)
-RsquareAdj(geo.rda)
-
-anova(clim_rda.shape)
-RsquareAdj(clim_rda.shape)
-
-anova(veg.rda.shape)
-RsquareAdj(veg.rda.shape)
-
 
 ```
