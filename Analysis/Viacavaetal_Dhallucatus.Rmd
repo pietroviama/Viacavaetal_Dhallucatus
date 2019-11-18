@@ -179,17 +179,57 @@ procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = grDevice
 
 ``` {r Procrustes ANOVA and pairwise comparisons between shape and centroid size means of each population, include=TRUE}
 
-fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population)
+fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit1)
 PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
 
 summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
 
-fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population)
+fit2 <- lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population)
 summary(fit2)
 PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
 
 summary(PW2, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+
+#Are there differences in shape and size between island and mainland individuals?
+
+fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
+summary(fitisl)
+
+fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
+summary(fitsizeisl)
+
+```
+```{r calculate residual shape and test residual shape differences between populations and pairwise comparisons}
+
+fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
+
+main_residuals3D <- arrayspecs(fit.size$residuals, 900, 3)
+
+allom_resplusconsensus <- main_residuals3D + array(gpadhallminusisland$consensus,dim(main_residuals3D))
+
+gpares<-gpagen(allom_resplusconsensus, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+gdfres <- geomorph.data.frame(gpares, Population = Dhalldataminusisland$Population, 
+                           Sex = Dhalldataminusisland$Sex, MuseumID = Dhalldataminusisland$Museum_ID, Latitude = Dhalldataminusisland$Latitude, 
+                           Longitude = Dhalldataminusisland$Longitude, main_island = Dhalldataminusisland$Island_Mainland, IBRA = Dhalldataminusisland$IBRA_7_Regions,
+                           Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
+                           Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
+                           habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
+                           Species = Dhalldataminusisland$Species)
+
+PCAres <- plotTangentSpace(gdfres$coords, warpgrids = FALSE, mesh = NULL, label = TRUE, groups = gdfres$Population, legend = FALSE)
+
+summary(PCAres)
+
+#shaperesiduals vs pop
+
+fit1resshape <- procD.lm(gpares$coords~Dhalldataminusisland$Population)
+anova(fit1resshape)
+PW1resshape <- pairwise(fit1resshape, groups = Dhalldataminusisland$Population)
+summary(PW1resshape, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+
 ```
 
 ```{r Figure 2: Heat plot visualizations of mean shape differences and residual mean shape differences between between populations,and distribution map of specimens used for this Figure with populations labelled, include=TRUE}
@@ -398,7 +438,7 @@ anova(fit.size)
 
 #unique allometries by population?
 
-fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminusisland, print.progress = FALSE)
+fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminusisland, print.progress = FALSE, effect.type = "F")
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
 
@@ -406,13 +446,22 @@ anova(fit.size.uni)
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
+
+legend("bottomright", legend=unique(gdfhallucatusminusisland$Population), pch=19, col=unique(gdfhallucatusminusisland$Population), cex = 1.3)
+
 anova(fit.size.common)
+
+#plot allometry labelling sexes 
+
+plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Sex))
+
+legend("bottomright", legend=unique(gdfhallucatusminusisland$Sex), pch=19, col=unique(gdfhallucatusminusisland$Sex), cex = 1.3)
+
 
 
 ```
 
-``` {r variation partitioning analysis on mainland specimens, include = TRUE}
-
+```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
 # subtraction of island specimens, data preparation
 
 Mainlanddata <- Dhallucatusdata[-which(Dhallucatusdata$Island_Mainland=="island"),]
@@ -444,6 +493,38 @@ gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Popula
                            Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
                            habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
                            Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp) 
+
+#ProcANOVA on shape with lon and lat factors
+
+fitshapelat<-procD.lm(gdfmainland$coords~latsmain, effect.type = "F")
+summary(fitshapelat)
+
+fitshapelon<-procD.lm(gdfmainland$coords~lonsmain, effect.type = "F")
+summary(fitshapelon)
+
+lmsizelat<-lm(gdfmainland$Csize~latsmain)
+summary(lmsizelat)
+
+lmsizelon<-lm(gdfmainland$Csize~lonsmain)
+summary(lmsizelon)
+
+fitshapetempmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Temp, effect.type = "F")
+summary(fitshapetempmain)
+
+fitshapeppmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Prec)
+summary(fitshapeppmain)
+
+lmsizetempmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Temp)
+summary(lmsizetempmain)
+
+lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
+summary(lmsizeppmain)
+
+
+```
+
+``` {r variation partitioning analysis on mainland specimens, include = TRUE}
+
 
 #Perform a PCA to overcome autocorrelation issues that may arise from geographic distances
 
@@ -480,17 +561,16 @@ matCsizemain <- gpamainland$Csize
 
 mod<-varpart(mymat,~spat.data, ~matCsizemain, ~matprectemp[,c(1:2)])
 
-showvarparts(3, bg = c("blue", "red", "black"))
-plot(mod, bg = c("blue", "red", "black"), Xnames=c("Geography","Size","Climate"))
+showvarparts(3, bg = c("blue", "red", "black"), Xnames=c("Geography","Size","Climate"), cex = 2, id.size = 2)
+plot(mod, bg = c("blue", "red", "black"), Xnames=c("Geography","Size","Climate"), cex = 2, id.size = 2)
 
 full_rda<-vegan::rda(mymat~spat.data+matprectemp[,c(1:2)]+matCsizemain)### full model
 
-geo.rda<-vegan::rda(mymat~spat.data+Condition(matprectemp[,c(1:2)])+Condition,(matCsizemain))### fraction variance of the variable
+geo.rda<-vegan::rda(mymat~spat.data+Condition(matprectemp[,c(1:2)])+Condition(matCsizemain))### fraction variance of the variable
 
 clim.rda.shape<-vegan::rda(mymat~matprectemp[,c(1:2)]+Condition(spat.data)+Condition(matCsizemain))
 
 size.rda.shape<-vegan::rda(mymat~matCsizemain+Condition(spat.data)+Condition(matprectemp[,c(1:2)]))
-
 
 
 
