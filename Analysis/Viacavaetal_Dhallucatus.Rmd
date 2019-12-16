@@ -145,7 +145,7 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
 
 ```{r morpological disparity differences between island populations and mainland populations, include=TRUE}
 
-morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
+disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
 
 ```
 
@@ -326,6 +326,7 @@ australiamap_data <-
 
 
 australiamap_data
+
 ```
 
 ```{r sexual dimorphism and allometry, data preparation of size-corrected shape, include=TRUE}
@@ -442,7 +443,7 @@ fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminus
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
 
-#common allometry across all populations?
+`#common allometry across all populations?
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
