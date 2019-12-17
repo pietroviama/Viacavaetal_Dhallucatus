@@ -443,7 +443,7 @@ fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminus
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
 
-`#common allometry across all populations?
+#common allometry across all populations?
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
