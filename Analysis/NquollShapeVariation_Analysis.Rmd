@@ -1,5 +1,5 @@
 ---
-title: "Viacavaetal_Dhallucatus_cranialdivergence"
+title: "Dhallucatus_cranialdivergence"
 output:
   pdf_document: default
   html_document: default
@@ -7,7 +7,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = 'C:/Users/pietro/Desktop/Pietro/Specimens', echo = TRUE)
+knitr::opts_knit$set(root.dir = '.../Specimens', echo = TRUE)
 
 #load libraries
 
@@ -31,7 +31,7 @@ library(landvR)
 
 ```{r load data}
 #Import 3D coordinates from all specimens
-coords.3D <- t (read.csv("Data/LMcoords_Dhallucatus.csv", header = TRUE, row.names = 1))
+coords.3D <- t (read.csv(".../NquollShapeVariation_LMcoords.csv", header = TRUE, row.names = 1))
 
 
 #Convert 2D metadata into a 3D array
@@ -40,7 +40,7 @@ dim(A) #check dimensions of 3D array (number of specimens in z)
 Ahead <- head(dimnames(A))[3] #specimen names
 
 #Load the classifier
-quollsdata <- read.csv("C:/Users/pietro/Desktop/Pietro/Specimens/Dhallucatus_data.csv", header=T)
+quollsdata <- read.csv(".../NquollShapeVariation_data.csv", header=T)
 Data.pops <- quollsdata$Population
 is.factor(Data.pops) # check that it is a factor
 
@@ -65,9 +65,9 @@ Dhallucatuscoords <- A_reorder[,,-which(quollsdata$Population=="Other species")]
 
 Dhallucatusdata <- quollsdata[-which(quollsdata$Population=='Other species'),] 
 Dhallucatusdata <- droplevels(Dhallucatusdata)
-
+S
 #check that specimens ID in coords array mirror specimen ID in classifier file
-dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
+dimnames(Dhallucatuscoords)[[3]]==rownames(DhallucatSusdata)
 ```
 
 ```{r Generalized Procrustes Analyses, extraction of climatic variables and dataframing for geomorph, include=TRUE}
@@ -185,7 +185,7 @@ PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
 
 summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
 
-fit2 <- lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population)
+fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit2)
 PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
 
@@ -443,7 +443,7 @@ fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminus
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
 
-`#common allometry across all populations?
+#common allometry across all populations?
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
