@@ -17,7 +17,8 @@ library(geomorph)
 library(ggplot2)
 library(raster)
 library(vegan)
-
+library(ALA4R)
+library(Morpho)
 
 if(!require(devtools)) install.packages("devtools")
 library(devtools)
@@ -31,7 +32,7 @@ library(landvR)
 
 ```{r load data}
 #Import 3D coordinates from all specimens
-coords.3D <- t (read.csv(".../NquollShapeVariation_LMcoords.csv", header = TRUE, row.names = 1))
+coords.3D <- t (read.csv("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Data/NquollShapeVariation_LMcoords.csv", header = TRUE, row.names = 1))
 
 
 #Convert 2D metadata into a 3D array
@@ -40,7 +41,7 @@ dim(A) #check dimensions of 3D array (number of specimens in z)
 Ahead <- head(dimnames(A))[3] #specimen names
 
 #Load the classifier
-quollsdata <- read.csv(".../NquollShapeVariation_data.csv", header=T)
+quollsdata <- read.csv("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Data/NquollShapeVariation_data.csv", header=T)
 Data.pops <- quollsdata$Population
 is.factor(Data.pops) # check that it is a factor
 
@@ -65,9 +66,37 @@ Dhallucatuscoords <- A_reorder[,,-which(quollsdata$Population=="Other species")]
 
 Dhallucatusdata <- quollsdata[-which(quollsdata$Population=='Other species'),] 
 Dhallucatusdata <- droplevels(Dhallucatusdata)
-S
+
 #check that specimens ID in coords array mirror specimen ID in classifier file
-dimnames(Dhallucatuscoords)[[3]]==rownames(DhallucatSusdata)
+dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
+
+#retrieve vegetation type from spatial data of the Atlas of Living Australia
+Dhallgps <- data.frame(Dhallucatusdata$Latitude, Dhallucatusdata$Longitude)
+layers <- c("cl620", "cl618", "el819")
+vegtype <- intersect_points(Dhallgps, layers)
+vegtype$vegetationTypesPresent<-as.factor(vegtype$vegetationTypesPresent)
+vegtype$landCover<-as.factor(vegtype$landCover)
+vegtype$distanceToCoast[is.na(vegtype$distanceToCoast)]<-0
+
+vegtype2 <- data.frame(Dhallucatusdata$Museum_ID, Dhallucatusdata$Latitude, Dhallucatusdata$Longitude, Dhallucatusdata$Vegetation_type)
+
+levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt open forests"]<-"Eucalyptus open forest"
+levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt open woodlands"]<-"Eucalyptus open woodlands"
+levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt woodlands"]<-"Eucalyptus woodlands"
+levels(vegtype$vegetationTypesPresent)[levels(vegtype$vegetationTypesPresent)==""]<-"Unknown/no data"
+levels(vegtype$landCover)[levels(vegtype$landCover)==""]<-"Unknown/no data"
+
+
+vegtype2$Dhallucatusdata.Vegetation_type <- factor(vegtype2$Dhallucatusdata.Vegetation_type, levels=levels(vegtype$vegetationTypesPresent))
+
+vegtype$vegetationTypesPresent==vegtype2$Dhallucatusdata.Vegetation_type
+
+vegtypefill <- coalesce(vegtype2$Dhallucatusdata.Vegetation_type, vegtype$vegetationTypesPresent)
+
+Dhallucatusdata$landCover <- vegtype$landCover
+Dhallucatusdata$distanceToCoast <- vegtype$distanceToCoast
+Dhallucatusdata$Vegetation_type <- vegtypefill
+
 ```
 
 ```{r Generalized Procrustes Analyses, extraction of climatic variables and dataframing for geomorph, include=TRUE}
@@ -97,7 +126,7 @@ gdfhallucatus <- geomorph.data.frame(gpahallucatus, Population = Dhallucatusdata
                            Longitude = Dhallucatusdata$Longitude, main_island = Dhallucatusdata$Island_Mainland, IBRA = Dhallucatusdata$IBRA_7_Regions,
                            Datcoll = Dhallucatusdata$Date_collected, conservationstatus = Dhallucatusdata$Conservation_status,
                            Aridity = Dhallucatusdata$Aridity_index, precipitation = Dhallucatusdata$Precipitation, 
-                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, climate = Dhallucatusdata$Climate_classification,
+                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, landcover = Dhallucatusdata$landCover, distcoast = Dhallucatusdata$distanceToCoast, climate = Dhallucatusdata$Climate_classification,
                            ppworldclim = Dhallucatusworldclim$Prec, tempworldclim = Dhallucatusworldclim$Temp, Species = Dhallucatusdata$Species)
 
 
@@ -140,7 +169,7 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
                            Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
-                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species) 
+                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast) 
 ```
 
 ```{r morpological disparity differences between island populations and mainland populations, include=TRUE}
@@ -217,7 +246,7 @@ gdfres <- geomorph.data.frame(gpares, Population = Dhalldataminusisland$Populati
                            Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
                            Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
-                           Species = Dhalldataminusisland$Species)
+                           Species = Dhalldataminusisland$Species,  landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast)
 
 PCAres <- plotTangentSpace(gdfres$coords, warpgrids = FALSE, mesh = NULL, label = TRUE, groups = gdfres$Population, legend = FALSE)
 
@@ -346,7 +375,7 @@ gdfsex <- geomorph.data.frame(gpasex, Population = Sexdata$Population,
                            Longitude = Sexdata$Longitude, main_island = Sexdata$Island_Mainland, IBRA= Sexdata$IBRA_7_Regions,
                            Datcoll = Sexdata$Date_collected, conservationstatus = Sexdata$Conservation_status,
                            Aridity = Sexdata$Aridity_index, precipitation = Sexdata$Precipitation, 
-                           habitat = Sexdata$Forest_habitat, vegtype = Sexdata$Vegetation_type, climate = Sexdata$Climate_classification) 
+                           habitat = Sexdata$Forest_habitat, vegtype = Sexdata$Vegetation_type, climate = Sexdata$Climate_classification, landcover = Sexdata$landCover, DistancetoCoast = Sexdata$distanceToCoast) 
 
 #PCA with sexes labelled
 
@@ -375,7 +404,6 @@ summary(fit.sex.uni)
 
 lmsizesex <- lm(gdfsex$Csize~gdfsex$Sex)
 summary(lmsizesex)
-
 
 #Here, we extract the residuals of allometry of each specimen and we add them up to the consensus shape obtained from GPA
 
@@ -459,7 +487,6 @@ plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FA
 legend("bottomright", legend=unique(gdfhallucatusminusisland$Sex), pch=19, col=unique(gdfhallucatusminusisland$Sex), cex = 1.3)
 
 
-
 ```
 
 ```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
@@ -493,7 +520,7 @@ gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Popula
                            Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
                            Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
                            habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
-                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp) 
+                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast) 
 
 #ProcANOVA on shape with lon and lat factors
 
@@ -594,5 +621,30 @@ RsquareAdj(Eclim)
 Egeo<-vegan::rda(mymat~spat.data)
 anova(Egeo)
 RsquareAdj(Egeo)
+
+
+
+
+
+
+
+#Build phenograms based on Euclidean distances
+CVAquollspops <- CVA(gdfmainland$coords, groups = gdfmainland$Population, weighting = TRUE, plot = TRUE, rounds = 1000)
+plot(CVAquollspops$CVscores[,1:2], bg=gdfmainland$Population, pch=21, typ="p", asp = 1)
+
+Euclidist_quollspops <- CVAquollspops$Dist$GroupdistEuclid
+
+Euclidist <- dist(Euclidist_quollspops, method = "euclidean")
+
+the.cluster <- hclust(Euclidist, method = "average")
+plot(the.cluster)
+plot(nj(Euclidist_quollspops),main="Neighbor Joining") 
+plot(upgma(Euclidist_quollspops),main="UPGMA")
+
+#Mahalanobis distances are not that good for building phenograms
+Mahadist_quolls <- CVAquollspops$Dist$GroupdistMaha
+plot(hclust(as.dist(Mahadist_quolls)))
+plot(nj(Mahadist_quolls),main="Neighbor Joining") 
+plot(upgma(Mahadist_quolls),main="UPGMA")
 
 ```
