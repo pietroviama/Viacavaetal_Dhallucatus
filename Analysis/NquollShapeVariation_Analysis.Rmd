@@ -72,7 +72,7 @@ dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
 
 #retrieve vegetation type from spatial data of the Atlas of Living Australia
 Dhallgps <- data.frame(Dhallucatusdata$Latitude, Dhallucatusdata$Longitude)
-layers <- c("cl620", "cl618", "el819")
+layers <- c("cl620", "cl618", "el819", "el1077")
 vegtype <- intersect_points(Dhallgps, layers)
 vegtype$vegetationTypesPresent<-as.factor(vegtype$vegetationTypesPresent)
 vegtype$landCover<-as.factor(vegtype$landCover)
@@ -175,6 +175,8 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
 ```{r morpological disparity differences between island populations and mainland populations, include=TRUE}
 
 disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
+
+disparitypops <- morphol.disparity(coords~1, groups = ~ Population, data = gdfmainland, iter = 499)
 
 ```
 
@@ -631,13 +633,31 @@ RsquareAdj(Egeo)
 #Build phenograms based on Euclidean distances
 CVAquollspops <- CVA(gdfmainland$coords, groups = gdfmainland$Population, weighting = TRUE, plot = TRUE, rounds = 1000)
 plot(CVAquollspops$CVscores[,1:2], bg=gdfmainland$Population, pch=21, typ="p", asp = 1)
-
+gpamainland$procD
 Euclidist_quollspops <- CVAquollspops$Dist$GroupdistEuclid
 
-Euclidist <- dist(Euclidist_quollspops, method = "euclidean")
+Euclidist <- dist(gpamainland$procD, method = "euclidean")
 
-the.cluster <- hclust(Euclidist, method = "average")
+colspop <- rainbow(length(levels(gdfmainland$Population)))
+library(dendextend)
+ClustLab <- paste(gdfmainland$Population)
+plotColoredClusters(the.cluster, labs = ClustLab, cols = colspop)
+
+population <- factor(gdfmainland$Population)
+n_population <- length(unique(population))
+cols_4 <- colorspace::rainbow_hcl(n_population)
+col_population <- cols_4[population]
+
+labels_colors(the.cluster) <- col_population[order.dendrogram(the.cluster)]
+
 plot(the.cluster)
+legend("topleft", legend = levels(population), fill = cols_4)
+
+the.cluster <- as.dendrogram(hclust(Euclidist, method = "average"))
+dend2 <- color_labels(the.cluster, col = colspop, labels = labels(the.cluster)[gdfmainland$Population])
+plot(dend2)
+plot(the.cluster)
+labels_colors(the.cluster)
 plot(nj(Euclidist_quollspops),main="Neighbor Joining") 
 plot(upgma(Euclidist_quollspops),main="UPGMA")
 
