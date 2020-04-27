@@ -220,7 +220,7 @@ fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population, iter
 summary(fit2)
 PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
 
-summary(PW2, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+summary(PW2, test.type = "dist", confidence = 0.95, stat.table = FALSE)
 
 #Are there differences in shape and size between island and mainland individuals?
 
@@ -228,6 +228,7 @@ fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 
 summary(fitisl)
 
 fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
+anova(fitsizeisl)
 summary(fitsizeisl)
 
 ```
@@ -405,6 +406,7 @@ summary(fit.sex.uni)
 #Are sexes different in Centroid Size (proxy for size)?
 
 lmsizesex <- lm(gdfsex$Csize~gdfsex$Sex)
+anova(lmsizesex)
 summary(lmsizesex)
 
 #Here, we extract the residuals of allometry of each specimen and we add them up to the consensus shape obtained from GPA
@@ -651,6 +653,8 @@ col_population <- cols_4[population]
 labels_colors(the.cluster) <- col_population[order.dendrogram(the.cluster)]
 
 plot(the.cluster)
+
+
 legend("topleft", legend = levels(population), fill = cols_4)
 
 the.cluster <- as.dendrogram(hclust(Euclidist, method = "average"))
@@ -666,5 +670,81 @@ Mahadist_quolls <- CVAquollspops$Dist$GroupdistMaha
 plot(hclust(as.dist(Mahadist_quolls)))
 plot(nj(Mahadist_quolls),main="Neighbor Joining") 
 plot(upgma(Mahadist_quolls),main="UPGMA")
+
+```
+
+``` {r boxplot figure, include = TRUE}
+
+df.hallucatusislmain <- data.frame(gdfhallucatus$Csize, gdfhallucatus$main_island)
+
+islmainbplot <- ggplot(df.hallucatusislmain, 
+       aes(x = gdfhallucatus.main_island, 
+           y = gdfhallucatus.Csize, 
+           fill = gdfhallucatus.main_island)) +
+  scale_fill_manual(values = c("gray84", "gray84")) +
+  labs(x= NULL, y= "Centroid size",
+       title= NULL) +
+  geom_boxplot() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 12), axis.title.y = element_text(size=12))
+
+
+df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
+
+Sexbplot <- ggplot(df.hallucatussex, 
+                       aes(x = gdfsex.Sex, 
+                           y = gdfsex.Csize, 
+                           fill = gdfsex.Sex)) +
+  scale_fill_manual(values = c("gray84", "gray84")) +
+  labs(x= NULL, y= NULL,
+       title= NULL) +
+  geom_boxplot() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 12))
+
+
+df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
+
+Popbplot <-   ggplot(df.hallucatuspop, 
+                   aes(x = reorder(gdfhallucatusminusisland.Population, gdfhallucatusminusisland.Csize, FUN = median), 
+                       y = gdfhallucatusminusisland.Csize, 
+                       fill = gdfhallucatusminusisland.Population)) +
+    labs(x= NULL, y= NULL,
+       title= NULL) +
+  geom_boxplot() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 12))
+
+
+multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
+  require(grid)
+  
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  if (is.null(layout)) {
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots == 1) {
+    print(plots[[1]])
+    
+  } else {
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    for (i in 1:numPlots) {
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+multiplot(islmainbplot, Sexbplot, Popbplot, cols = 3)
+
 
 ```
