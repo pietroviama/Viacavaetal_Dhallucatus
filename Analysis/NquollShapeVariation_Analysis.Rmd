@@ -19,6 +19,7 @@ library(raster)
 library(vegan)
 library(ALA4R)
 library(Morpho)
+library(dplyr)
 
 if(!require(devtools)) install.packages("devtools")
 library(devtools)
@@ -172,11 +173,12 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast) 
 ```
 
-```{r morpological disparity differences between island populations and mainland populations, include=TRUE}
+```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
 
 disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
 
 disparitypops <- morphol.disparity(coords~1, groups = ~ Population, data = gdfmainland, iter = 499)
+
 
 ```
 
@@ -359,6 +361,40 @@ australiamap_data <-
 
 australiamap_data
 
+
+#######################################################################################
+#######################################################################################
+
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(ggsn)
+
+range(Dhalldataminusisland$Longitude, na.rm = TRUE, finite = TRUE)
+range(Dhalldataminusisland$Latitude, na.rm = TRUE, finite = TRUE)
+
+sbbox <- make_bbox(lon = Dhalldataminusisland$Longitude , lat = Dhalldataminusisland$Latitude, f = .1)
+
+base <- get_map(location=sbbox, maptype="satellite", source = "google")
+
+map1 <- ggmap(base)
+map1
+
+Dhallgps1 <- data.frame(Dhalldataminusisland$Population, Dhalldataminusisland$Latitude, Dhalldataminusisland$Longitude)
+
+map2 <- 
+  map1+
+   geom_point(data=Dhallgps1, 
+             aes(x=Dhalldataminusisland.Longitude, y=Dhalldataminusisland.Latitude, fill =Dhalldataminusisland.Population)
+            ,pch=21, size=7, alpha=I(0.7))+
+  theme(legend.position = c(1,0.8), legend.justification = c(0,1), legend.key = element_blank(), legend.title = element_text(size = 20),
+        legend.text = element_text(size = 18))+
+    labs(fill="Population")
+
+map2
+north2 (map2, .15, .7, scale = 0.1, symbol = 1)
+
+###FIX ZOOM<, LAT AND LON LIMIT, AND LETTERS SHOWN IN MAP (OR DIFFERENT MAPTYPE)
 ```
 
 ```{r sexual dimorphism and allometry, data preparation of size-corrected shape, include=TRUE}
@@ -665,11 +701,35 @@ labels_colors(the.cluster)
 plot(nj(Euclidist_quollspops),main="Neighbor Joining") 
 plot(upgma(Euclidist_quollspops),main="UPGMA")
 
-#Mahalanobis distances are not that good for building phenograms
-Mahadist_quolls <- CVAquollspops$Dist$GroupdistMaha
-plot(hclust(as.dist(Mahadist_quolls)))
-plot(nj(Mahadist_quolls),main="Neighbor Joining") 
-plot(upgma(Mahadist_quolls),main="UPGMA")
+
+
+clusteronmeans<-function(x,group,method="euclidean",FUN=mean,nj=F,title=NULL,tip.color=1,cex=1){
+ library(MASS)
+ library(car)
+ library(phangorn)
+ x<-as.matrix(x)
+ group2<-group[order(group)]
+ if(ncol(x)>2){x2<-x[order(group),]}else{x2<-x[order(group)]}
+ x3<-aggregate(x2,by=list(group2),FUN=FUN)
+ rownames(x3)<-levels(group2)
+ plot(upgma(as.matrix(dist(x3[,-1,drop=F],method=method))),tip.color=tip.color,cex=cex)
+ par(new=T)
+ if(is.null(title)==T){title(main="upgma")}else{title(main=title)}
+ if(nj==T){
+x11()
+ plot(nj(as.matrix(dist(x3[,-1,drop=F],method=method))),,tip.color=tip.color,cex=cex)
+ par(new=T)
+ if(is.null(title)==T){title(main="neighbor-joining")}else{title(main=title)}
+}
+ print("distances")
+ as.matrix(dist(x3[,-1,drop=F],method=method))
+}
+
+popclustupgma <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population)
+
+
+popclustnj <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population, nj = T)
+
 
 ```
 
