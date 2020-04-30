@@ -172,13 +172,74 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
                            ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast) 
 ```
+```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
+# subtraction of island specimens, data preparation
+
+Mainlanddata <- Dhallucatusdata[-which(Dhallucatusdata$Island_Mainland=="island"),]
+Mainlanddata <- droplevels(Mainlanddata)
+
+coordsmainland <- Dhallucatuscoords[,,-which(Dhallucatusdata$Island_Mainland=="island")]
+
+gpamainland<-gpagen(coordsmainland, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+rclimmainland<- getData("worldclim",var="bio",res=10)
+
+rclimmainland <- rclimmainland[[c(1,12)]]
+names(rclimmainland) <- c("Temp","Prec")
+
+lonsmain <- Mainlanddata$Longitude
+latsmain <- Mainlanddata$Latitude
+
+coordsgpsmain <- data.frame(lonsmain, latsmain)
+
+valuesclimmain <- extract(rclimmainland,coordsgpsmain)
+
+Dhallucatusworldclimmain <- cbind.data.frame(coordsgpsmain,valuesclimmain)
+
+gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Population, 
+                           Sex = Mainlanddata$Sex, MuseumID = Mainlanddata$Museum_ID, Latitude = Mainlanddata$Latitude, 
+                           Longitude = Mainlanddata$Longitude, main_island = Mainlanddata$Island_Mainland, IBRA = Mainlanddata$IBRA_7_Regions,
+                           Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
+                           Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
+                           habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
+                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast) 
+
+#ProcANOVA on shape with lon and lat factors
+
+fitshapelat<-procD.lm(gdfmainland$coords~latsmain, effect.type = "F")
+summary(fitshapelat)
+
+fitshapelon<-procD.lm(gdfmainland$coords~lonsmain, effect.type = "F")
+summary(fitshapelon)
+
+lmsizelat<-lm(gdfmainland$Csize~latsmain)
+summary(lmsizelat)
+
+lmsizelon<-lm(gdfmainland$Csize~lonsmain)
+summary(lmsizelon)
+
+fitshapetempmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Temp, effect.type = "F")
+summary(fitshapetempmain)
+
+fitshapeppmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Prec)
+summary(fitshapeppmain)
+
+lmsizetempmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Temp)
+summary(lmsizetempmain)
+
+lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
+summary(lmsizeppmain)
+
+```
 
 ```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
 
 disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
+summary(disparitymainisl)
 
 disparitypops <- morphol.disparity(coords~1, groups = ~ Population, data = gdfmainland, iter = 499)
-
+summary(disparitypops)
 
 ```
 
@@ -208,6 +269,20 @@ predshapesize <- shape.predictor(gpadhallminusisland$coords, x=gpadhallminusisla
 allomshapediff <- coordinates.difference(predshapesize$predmin, predshapesize$predmax, type = "spherical")
 procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = grDevices::heat.colors, allomshapediff[[1]][,"radius"], pt.size = 0.7)
 
+#shape changes associated to precipitation
+
+predshapepp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$ppworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$ppworldclim), predmax = max(gdfhallucatusminusisland$ppworldclim))
+
+ppshapediff <- coordinates.difference(predshapepp$predmin, predshapepp$predmax, type = "spherical")
+procrustes.var.plot(predshapepp$predmin, predshapepp$predmax, col = grDevices::heat.colors, ppshapediff[[1]][,"radius"], pt.size = 0.7)
+
+#shape changes associated to temperature
+
+predshapetemp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$tempworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$tempworldclim), predmax = max(gdfhallucatusminusisland$tempworldclim))
+
+tempshapediff <- coordinates.difference(predshapetemp$predmin, predshapetemp$predmax, type = "spherical")
+procrustes.var.plot(predshapetemp$predmin, predshapetemp$predmax, col = grDevices::heat.colors, tempshapediff[[1]][,"radius"], pt.size = 0.7)
+
 ```
 
 ``` {r Procrustes ANOVA and pairwise comparisons between shape and centroid size means of each population, include=TRUE}
@@ -230,7 +305,6 @@ fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 
 summary(fitisl)
 
 fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
-anova(fitsizeisl)
 summary(fitsizeisl)
 
 ```
@@ -529,67 +603,7 @@ legend("bottomright", legend=unique(gdfhallucatusminusisland$Sex), pch=19, col=u
 
 ```
 
-```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
-# subtraction of island specimens, data preparation
 
-Mainlanddata <- Dhallucatusdata[-which(Dhallucatusdata$Island_Mainland=="island"),]
-Mainlanddata <- droplevels(Mainlanddata)
-
-coordsmainland <- Dhallucatuscoords[,,-which(Dhallucatusdata$Island_Mainland=="island")]
-
-gpamainland<-gpagen(coordsmainland, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
-                   max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
-
-rclimmainland<- getData("worldclim",var="bio",res=10)
-
-rclimmainland <- rclimmainland[[c(1,12)]]
-names(rclimmainland) <- c("Temp","Prec")
-
-lonsmain <- Mainlanddata$Longitude
-latsmain <- Mainlanddata$Latitude
-
-coordsgpsmain <- data.frame(lonsmain, latsmain)
-
-valuesclimmain <- extract(rclimmainland,coordsgpsmain)
-
-Dhallucatusworldclimmain <- cbind.data.frame(coordsgpsmain,valuesclimmain)
-
-gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Population, 
-                           Sex = Mainlanddata$Sex, MuseumID = Mainlanddata$Museum_ID, Latitude = Mainlanddata$Latitude, 
-                           Longitude = Mainlanddata$Longitude, main_island = Mainlanddata$Island_Mainland, IBRA = Mainlanddata$IBRA_7_Regions,
-                           Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
-                           Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
-                           habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
-                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast) 
-
-#ProcANOVA on shape with lon and lat factors
-
-fitshapelat<-procD.lm(gdfmainland$coords~latsmain, effect.type = "F")
-summary(fitshapelat)
-
-fitshapelon<-procD.lm(gdfmainland$coords~lonsmain, effect.type = "F")
-summary(fitshapelon)
-
-lmsizelat<-lm(gdfmainland$Csize~latsmain)
-summary(lmsizelat)
-
-lmsizelon<-lm(gdfmainland$Csize~lonsmain)
-summary(lmsizelon)
-
-fitshapetempmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Temp, effect.type = "F")
-summary(fitshapetempmain)
-
-fitshapeppmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Prec)
-summary(fitshapeppmain)
-
-lmsizetempmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Temp)
-summary(lmsizetempmain)
-
-lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
-summary(lmsizeppmain)
-
-
-```
 
 ``` {r variation partitioning analysis on mainland specimens, include = TRUE}
 
