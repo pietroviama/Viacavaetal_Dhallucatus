@@ -73,11 +73,13 @@ dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
 
 #retrieve vegetation type from spatial data of the Atlas of Living Australia
 Dhallgps <- data.frame(Dhallucatusdata$Latitude, Dhallucatusdata$Longitude)
-layers <- c("cl620", "cl618", "el819", "el1077")
+layers <- c("cl620", "cl618", "el819", "el1077", "el674")
 vegtype <- intersect_points(Dhallgps, layers)
 vegtype$vegetationTypesPresent<-as.factor(vegtype$vegetationTypesPresent)
 vegtype$landCover<-as.factor(vegtype$landCover)
 vegtype$distanceToCoast[is.na(vegtype$distanceToCoast)]<-0
+vegtype$elevation[is.na(vegtype$elevation)]<-0
+
 
 vegtype2 <- data.frame(Dhallucatusdata$Museum_ID, Dhallucatusdata$Latitude, Dhallucatusdata$Longitude, Dhallucatusdata$Vegetation_type)
 
@@ -97,6 +99,8 @@ vegtypefill <- coalesce(vegtype2$Dhallucatusdata.Vegetation_type, vegtype$vegeta
 Dhallucatusdata$landCover <- vegtype$landCover
 Dhallucatusdata$distanceToCoast <- vegtype$distanceToCoast
 Dhallucatusdata$Vegetation_type <- vegtypefill
+Dhallucatusdata$primprod <- vegtype$grossPrimaryProductivity20120313
+Dhallucatusdata$elevation <- vegtype$elevation
 
 ```
 
@@ -127,7 +131,7 @@ gdfhallucatus <- geomorph.data.frame(gpahallucatus, Population = Dhallucatusdata
                            Longitude = Dhallucatusdata$Longitude, main_island = Dhallucatusdata$Island_Mainland, IBRA = Dhallucatusdata$IBRA_7_Regions,
                            Datcoll = Dhallucatusdata$Date_collected, conservationstatus = Dhallucatusdata$Conservation_status,
                            Aridity = Dhallucatusdata$Aridity_index, precipitation = Dhallucatusdata$Precipitation, 
-                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, landcover = Dhallucatusdata$landCover, distcoast = Dhallucatusdata$distanceToCoast, climate = Dhallucatusdata$Climate_classification,
+                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, landcover = Dhallucatusdata$landCover, distcoast = Dhallucatusdata$distanceToCoast, elevation = Dhallucatusdata$elevation, climate = Dhallucatusdata$Climate_classification,
                            ppworldclim = Dhallucatusworldclim$Prec, tempworldclim = Dhallucatusworldclim$Temp, Species = Dhallucatusdata$Species)
 
 
@@ -170,7 +174,7 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
                            Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
-                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast) 
+                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast, elevation = Dhalldataminusisland$elevation) 
 ```
 ```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
 # subtraction of island specimens, data preparation
@@ -203,7 +207,7 @@ gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Popula
                            Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
                            Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
                            habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
-                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast) 
+                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast, primprod = Mainlanddata$primprod, Mainlanddata$elevation) 
 
 #ProcANOVA on shape with lon and lat factors
 
@@ -231,6 +235,30 @@ summary(lmsizetempmain)
 lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
 summary(lmsizeppmain)
 
+fitshapedistcoastmain <- procD.lm(gdfmainland$coords~Mainlanddata$distanceToCoast)
+summary(fitshapedistcoastmain)
+
+lmsizedistcoastmain <- lm(gdfmainland$Csize~Mainlanddata$distanceToCoast)
+summary(lmsizedistcoastmain)
+
+fitshapeelevmain <- procD.lm(gdfmainland$coords~Mainlanddata$elevation)
+summary(fitshapeelevmain)
+
+lmsizeelevmain <- lm(gdfmainland$Csize~Mainlanddata$elevation)
+summary(lmsizeelevmain)
+
+fitshapeprimprodmain <- procD.lm(gdfmainland$coords~Mainlanddata$primprod)
+summary(fitshapeprimprodmain)
+
+lmsizeprimprodmain <- lm(gdfmainland$Csize~Mainlanddata$primprod)
+summary(lmsizeprimprodmain)
+
+fitshapevegtypemain <- procD.lm(gdfmainland$coords~Mainlanddata$Vegetation_type)
+summary(fitshapevegtypemain)
+
+lmsizevegtypemain <- lm(gdfmainland$Csize~Mainlanddata$Vegetation_type)
+summary(lmsizevegtypemain)
+
 ```
 
 ```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
@@ -255,33 +283,41 @@ legend("topright", legend=unique(gdfhallucatusminusisland$Population), pch=19, c
 ```
 
 ``` {r Figure 1 shape changes associated to PC1 and allometry, include=TRUE} 
-#Figure 1a: shape changes associated to PC1 
+#Figure 1a: shape changes associated with PC1 
 
 mshapePC1minmax<-coordinates.difference(PCAminusisland$pc.shapes$PC1min,PCAminusisland$pc.shapes$PC1max, type = "spherical")
 
-procrustes.var.plot(PCAminusisland$pc.shapes$PC1max, PCAminusisland$pc.shapes$PC1min, col = grDevices::heat.colors, col.val = mshapePC1minmax[[1]][,"radius"], pt.size = 0.7)
+procrustes.var.plot(PCAminusisland$pc.shapes$PC1max, PCAminusisland$pc.shapes$PC1min, col = list(grDevices::heat.colors, "black"), col.val = mshapePC1minmax[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_PC1variation", fmt = "png")
 
-
-#Figure 1b: shape changes associated to allometry 
+#Figure 1b: shape changes associated with allometry 
 
 predshapesize <- shape.predictor(gpadhallminusisland$coords, x=gpadhallminusisland$Csize, Intercept = TRUE, predmin = min(gpadhallminusisland$Csize), predmax = max(gpadhallminusisland$Csize))
 
 allomshapediff <- coordinates.difference(predshapesize$predmin, predshapesize$predmax, type = "spherical")
-procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = grDevices::heat.colors, allomshapediff[[1]][,"radius"], pt.size = 0.7)
+procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = list(grDevices::heat.colors, "black"), allomshapediff[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_Allometryvariation", fmt = "png")
 
-#shape changes associated to precipitation
+#shape changes associated with precipitation
 
 predshapepp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$ppworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$ppworldclim), predmax = max(gdfhallucatusminusisland$ppworldclim))
 
-ppshapediff <- coordinates.difference(predshapepp$predmin, predshapepp$predmax, type = "spherical")
-procrustes.var.plot(predshapepp$predmin, predshapepp$predmax, col = grDevices::heat.colors, ppshapediff[[1]][,"radius"], pt.size = 0.7)
+ppshapediff <- coordinates.difference(predshapepp$predmax, predshapepp$predmin, type = "spherical")
+procrustes.var.plot(predshapepp$predmax, predshapepp$predmin, col = list(grDevices::heat.colors, "black"), ppshapediff[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_ppvariation", fmt = "png")
 
-#shape changes associated to temperature
+#shape changes associated with temperature
 
 predshapetemp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$tempworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$tempworldclim), predmax = max(gdfhallucatusminusisland$tempworldclim))
 
-tempshapediff <- coordinates.difference(predshapetemp$predmin, predshapetemp$predmax, type = "spherical")
-procrustes.var.plot(predshapetemp$predmin, predshapetemp$predmax, col = grDevices::heat.colors, tempshapediff[[1]][,"radius"], pt.size = 0.7)
+tempshapediff <- coordinates.difference(predshapetemp$predmax, predshapetemp$predmin, type = "spherical")
+procrustes.var.plot(predshapetemp$predmax, predshapetemp$predmin, col = list(grDevices::heat.colors, "black"), tempshapediff[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_tempvariation", fmt = "png")
+
 
 ```
 
@@ -503,15 +539,15 @@ legend("bottomright", legend=unique(gdfsex$Sex), pch=19, col=unique(gdfsex$Sex),
 fit.shapesex <- procD.lm(coords~Sex, data = gdfsex)
 summary(fit.shapesex)
 
-#Is there allometry? How much shape differences between sexes there are after correcting for size?
-
-fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex)
-summary(fit.sex)
-
 #Is there a common allometry or are there unique allometries across sexes?
 
 fit.sex.uni <- procD.lm(f1 = coords~Csize*Sex, data = gdfsex)
 summary(fit.sex.uni)
+
+#Are there shape differences between sexes there are after correcting for size?
+
+fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex)
+summary(fit.sex)
 
 #Are sexes different in Centroid Size (proxy for size)?
 
@@ -552,7 +588,7 @@ class(mshapefemale) <- "matrix"
 
 mshapemalefemale <- coordinates.difference(mshapemale, mshapefemale, type = "spherical")
 
-procrustes.var.plot(mshapemale, mshapefemale, col = grDevices::heat.colors, col.val = mshapemalefemale[[1]][,"radius"], pt.size = 0.7)
+procrustes.var.plot(mshapefemale, mshapemale, col = grDevices::heat.colors, col.val = mshapemalefemale[[1]][,"radius"], pt.size = 0.7)
 
 #size-corrected shape differences between sexes, heatplot (Supplementary Figure 4)
 
@@ -592,7 +628,7 @@ plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FA
 
 legend("bottomright", legend=unique(gdfhallucatusminusisland$Population), pch=19, col=unique(gdfhallucatusminusisland$Population), cex = 1.3)
 
-anova(fit.size.common)
+summary(fit.size.common)
 
 #plot allometry labelling sexes 
 
@@ -614,7 +650,7 @@ specgeodist <- data.frame(gdfmainland$Latitude,gdfmainland$Longitude)
 mat.specgeodist <- dist(specgeodist, method="euclidean", diag=F, upper=F)
 pcnm <- pcnm(mat.specgeodist)
 
-sum(pcnm$values[1:10]/sum(pcnm$values[1:18]))
+sum(pcnm$values[1:10]/sum(pcnm$values[1:24]))
 
 spat.data<-pcnm$vectors[,1:10]
 
@@ -631,6 +667,7 @@ mymat<-array2mat(gpamainland$coords,89,2700)
 
 geo_rda<-vegan::rda(mymat~spat.data)
 anova(geo_rda)
+
 
 
 ### Figure 4: full variation partitioning model, from vegan library, test for constrained variation
@@ -676,8 +713,22 @@ Egeo<-vegan::rda(mymat~spat.data)
 anova(Egeo)
 RsquareAdj(Egeo)
 
+Ecsize<-vegan::rda(mymat~matCsizemain)
+anova(Ecsize)
+RsquareAdj(Ecsize)
+
+#variation partitioning model for size
 
 
+matCsizemain <- gpamainland$Csize
+
+mod<-varpart(matCsizemain,~spat.data, ~matprectemp[,c(1:2)])
+
+showvarparts(3, bg = c("blue", "red"), Xnames=c("Geography","Climate"), cex = 2, id.size = 2)
+plot(mod, bg = c("blue", "red"), Xnames=c("Geography","Climate"), cex = 2, id.size = 2)
+
+full_rda<-vegan::rda(matCsizemain~spat.data+matprectemp[,c(1:2)])### full model
+anova(full_rda)
 
 
 
@@ -707,7 +758,7 @@ plot(the.cluster)
 
 legend("topleft", legend = levels(population), fill = cols_4)
 
-the.cluster <- as.dendrogram(hclust(Euclidist, method = "average"))
+the.cluster <- as.dendrogram(hclust(Euclidist_quollspops, method = "average"))
 dend2 <- color_labels(the.cluster, col = colspop, labels = labels(the.cluster)[gdfmainland$Population])
 plot(dend2)
 plot(the.cluster)
