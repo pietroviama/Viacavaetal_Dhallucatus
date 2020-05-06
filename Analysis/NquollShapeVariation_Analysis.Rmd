@@ -263,10 +263,10 @@ summary(lmsizevegtypemain)
 
 ```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
 
-disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=499)
+disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=999)
 summary(disparitymainisl)
 
-disparitypops <- morphol.disparity(coords~1, groups = ~ Population, data = gdfmainland, iter = 499)
+disparitypops <- morphol.disparity(f1 = fittest, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
 summary(disparitypops)
 
 ```
@@ -413,16 +413,46 @@ mshapeKimberleyPilbara <- coordinates.difference(mshapeKimberley, mshapePilbara,
 
 
 ## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
-procrustes.var.plot(mshapeGroote, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapegrootekimberley[[1]][,"radius"])
-procrustes.var.plot(mshapeGroote, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapegrootePilbara[[1]][,"radius"])
-procrustes.var.plot(mshapeGroote, mshapeNT, col = grDevices::heat.colors, col.val =  mshapegrooteNT[[1]][,"radius"])
-procrustes.var.plot(mshapeGroote, mshapeQLD, col = grDevices::heat.colors, col.val =  mshapegrooteQLD[[1]][,"radius"])
-procrustes.var.plot(mshapeQLD, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeQLDpilbara[[1]][,"radius"])
-procrustes.var.plot(mshapeQLD, mshapeNT, col = grDevices::heat.colors, col.val =  mshapeQLDNT[[1]][,"radius"])
-procrustes.var.plot(mshapeQLD, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapeQLDKimberley[[1]][,"radius"])
-procrustes.var.plot(mshapeNT, mshapeKimberley, col = grDevices::heat.colors, col.val =  mshapeNTKimberley[[1]][,"radius"])
-procrustes.var.plot(mshapeNT, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeNTPilbara[[1]][,"radius"])
-procrustes.var.plot(mshapeKimberley, mshapePilbara, col = grDevices::heat.colors, col.val =  mshapeKimberleyPilbara[[1]][,"radius"])
+procrustes.var.plot(mshapeGroote, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootekimberley[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrootekimberley", fmt = "png")
+
+procrustes.var.plot(mshapeGroote, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootePilbara[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrootepilbara", fmt = "png")
+
+procrustes.var.plot(mshapeGroote, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteNT[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrooteNT", fmt = "png")
+
+procrustes.var.plot(mshapeGroote, mshapeQLD, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteQLD[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrooteQLD", fmt = "png")
+
+procrustes.var.plot(mshapeQLD, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDpilbara[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDPilbara", fmt = "png")
+
+procrustes.var.plot(mshapeQLD, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDNT[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDNT", fmt = "png")
+
+procrustes.var.plot(mshapeQLD, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDKimberley[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDKimberley", fmt = "png")
+
+procrustes.var.plot(mshapeNT, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTKimberley[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTKimberley", fmt = "png")
+
+procrustes.var.plot(mshapeNT, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTPilbara[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTPilbara", fmt = "png")
+
+procrustes.var.plot(mshapeKimberley, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeKimberleyPilbara[[1]][,"radius"], pt.size = 0.5)
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeKimberleyPilbara", fmt = "png")
+
 
 ###Distribution map of specimens used in this study labelled by population###
 
@@ -536,17 +566,17 @@ legend("bottomright", legend=unique(gdfsex$Sex), pch=19, col=unique(gdfsex$Sex),
 
 #Are sexes different in shape?
 
-fit.shapesex <- procD.lm(coords~Sex, data = gdfsex)
+fit.shapesex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
 summary(fit.shapesex)
 
 #Is there a common allometry or are there unique allometries across sexes?
 
-fit.sex.uni <- procD.lm(f1 = coords~Csize*Sex, data = gdfsex)
+fit.sex.uni <- procD.lm(f1 = coords~Csize*Sex, data = gdfsex, effect.type = "F")
 summary(fit.sex.uni)
 
 #Are there shape differences between sexes there are after correcting for size?
 
-fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex)
+fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex, effect.type = "F")
 summary(fit.sex)
 
 #Are sexes different in Centroid Size (proxy for size)?
