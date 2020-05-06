@@ -266,8 +266,12 @@ summary(lmsizevegtypemain)
 disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=999)
 summary(disparitymainisl)
 
-disparitypops <- morphol.disparity(f1 = fittest, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
+disparitypops <- morphol.disparity(coords ~ 1, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
 summary(disparitypops)
+
+
+fit3var <- lm(disparitypops$Procrustes.var~gdfhallucatusminusisland$Population)
+summary(fit3var)
 
 ```
 
@@ -325,7 +329,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 
 fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit1)
-PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
+I acutalPW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
 
 summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
 
@@ -334,6 +338,7 @@ summary(fit2)
 PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
 
 summary(PW2, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+
 
 #Are there differences in shape and size between island and mainland individuals?
 
