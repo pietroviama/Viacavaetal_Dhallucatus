@@ -218,45 +218,53 @@ fitshapelon<-procD.lm(gdfmainland$coords~lonsmain, effect.type = "F")
 summary(fitshapelon)
 
 lmsizelat<-lm(gdfmainland$Csize~latsmain)
+anova(lmsizelat)
 summary(lmsizelat)
 
 lmsizelon<-lm(gdfmainland$Csize~lonsmain)
+anova(lmsizelon)
 summary(lmsizelon)
 
 fitshapetempmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Temp, effect.type = "F")
 summary(fitshapetempmain)
 
-fitshapeppmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Prec)
+fitshapeppmain <- procD.lm(gdfmainland$coords~Dhallucatusworldclimmain$Prec, effect.type = "F")
 summary(fitshapeppmain)
 
 lmsizetempmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Temp)
+anova(lmsizetempmain)
 summary(lmsizetempmain)
 
 lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
+anova(lmsizeppmain)
 summary(lmsizeppmain)
 
-fitshapedistcoastmain <- procD.lm(gdfmainland$coords~Mainlanddata$distanceToCoast)
+fitshapedistcoastmain <- procD.lm(gdfmainland$coords~Mainlanddata$distanceToCoast, effect.type = "F")
 summary(fitshapedistcoastmain)
 
 lmsizedistcoastmain <- lm(gdfmainland$Csize~Mainlanddata$distanceToCoast)
+anova(lmsizedistcoastmain)
 summary(lmsizedistcoastmain)
 
-fitshapeelevmain <- procD.lm(gdfmainland$coords~Mainlanddata$elevation)
+fitshapeelevmain <- procD.lm(gdfmainland$coords~Mainlanddata$elevation, effect.type = "F")
 summary(fitshapeelevmain)
 
 lmsizeelevmain <- lm(gdfmainland$Csize~Mainlanddata$elevation)
+anova(lmsizeelevmain)
 summary(lmsizeelevmain)
 
-fitshapeprimprodmain <- procD.lm(gdfmainland$coords~Mainlanddata$primprod)
+fitshapeprimprodmain <- procD.lm(gdfmainland$coords~Mainlanddata$primprod, effect.type = "F")
 summary(fitshapeprimprodmain)
 
 lmsizeprimprodmain <- lm(gdfmainland$Csize~Mainlanddata$primprod)
+anova(lmsizeprimprodmain)
 summary(lmsizeprimprodmain)
 
-fitshapevegtypemain <- procD.lm(gdfmainland$coords~Mainlanddata$Vegetation_type)
+fitshapevegtypemain <- procD.lm(gdfmainland$coords~Mainlanddata$Vegetation_type, effect.type = "F")
 summary(fitshapevegtypemain)
 
 lmsizevegtypemain <- lm(gdfmainland$Csize~Mainlanddata$Vegetation_type)
+anova(lmsizevegtypemain)
 summary(lmsizevegtypemain)
 
 ```
@@ -269,10 +277,6 @@ summary(disparitymainisl)
 disparitypops <- morphol.disparity(coords ~ 1, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
 summary(disparitypops)
 
-
-fit3var <- lm(disparitypops$Procrustes.var~gdfhallucatusminusisland$Population)
-summary(fit3var)
-
 ```
 
 ```{r morphological differences between populations, exploratory analysis PCA, include=TRUE}  
@@ -282,7 +286,7 @@ PCAminusisland <- plotTangentSpace(gdfhallucatusminusisland$coords, warpgrids = 
 summary(PCAminusisland)
 
 
-PCAminusislandplot <- plot(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], bg = gdfhallucatusminusisland$Population, pch = 21, cex = 1.5, asp = T, xlab="Principal Component 1 (24.58%)", ylab="Principal Component 2 (11.58%)")
+PCAminusislandplot <- plot(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], bg = gdfhallucatusminusisland$Sex, pch = 21, cex = 1.5, asp = T, xlab="Principal Component 1 (24.58%)", ylab="Principal Component 2 (11.58%)")
 legend("topright", legend=unique(gdfhallucatusminusisland$Population), pch=19, col=unique(gdfhallucatusminusisland$Population), cex=1.3) #run in console
 ```
 
@@ -291,7 +295,7 @@ legend("topright", legend=unique(gdfhallucatusminusisland$Population), pch=19, c
 
 mshapePC1minmax<-coordinates.difference(PCAminusisland$pc.shapes$PC1min,PCAminusisland$pc.shapes$PC1max, type = "spherical")
 
-procrustes.var.plot(PCAminusisland$pc.shapes$PC1max, PCAminusisland$pc.shapes$PC1min, col = list(grDevices::heat.colors, "black"), col.val = mshapePC1minmax[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(PCAminusisland$pc.shapes$PC1min, PCAminusisland$pc.shapes$PC1max, col = list(grDevices::heat.colors, "black"), col.val = mshapePC1minmax[[1]][,"radius"], col.range = c(0, 0.015), pt.size = 0.5)
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_PC1variation", fmt = "png")
 
@@ -300,7 +304,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 predshapesize <- shape.predictor(gpadhallminusisland$coords, x=gpadhallminusisland$Csize, Intercept = TRUE, predmin = min(gpadhallminusisland$Csize), predmax = max(gpadhallminusisland$Csize))
 
 allomshapediff <- coordinates.difference(predshapesize$predmin, predshapesize$predmax, type = "spherical")
-procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = list(grDevices::heat.colors, "black"), allomshapediff[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = list(grDevices::heat.colors, "black"), allomshapediff[[1]][,"radius"], col.range = c(0, 0.015), pt.size = 0.5)
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_Allometryvariation", fmt = "png")
 
@@ -309,7 +313,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 predshapepp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$ppworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$ppworldclim), predmax = max(gdfhallucatusminusisland$ppworldclim))
 
 ppshapediff <- coordinates.difference(predshapepp$predmax, predshapepp$predmin, type = "spherical")
-procrustes.var.plot(predshapepp$predmax, predshapepp$predmin, col = list(grDevices::heat.colors, "black"), ppshapediff[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(predshapepp$predmax, predshapepp$predmin, col = list(grDevices::heat.colors, "black"), ppshapediff[[1]][,"radius"], col.range = c(0, 0.015), pt.size = 0.5)
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_ppvariation", fmt = "png")
 
@@ -318,7 +322,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 predshapetemp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$tempworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$tempworldclim), predmax = max(gdfhallucatusminusisland$tempworldclim))
 
 tempshapediff <- coordinates.difference(predshapetemp$predmax, predshapetemp$predmin, type = "spherical")
-procrustes.var.plot(predshapetemp$predmax, predshapetemp$predmin, col = list(grDevices::heat.colors, "black"), tempshapediff[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(predshapetemp$predmax, predshapetemp$predmin, col = list(grDevices::heat.colors, "black"), tempshapediff[[1]][,"radius"], col.range = c(0, 0.015), pt.size = 0.5)
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_tempvariation", fmt = "png")
 
@@ -329,7 +333,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 
 fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit1)
-I acutalPW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
+PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
 
 summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
 
@@ -346,9 +350,10 @@ fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 
 summary(fitisl)
 
 fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
+anova(fitsizeisl)
 summary(fitsizeisl)
-
 ```
+
 ```{r calculate residual shape and test residual shape differences between populations and pairwise comparisons}
 
 fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
@@ -418,45 +423,123 @@ mshapeKimberleyPilbara <- coordinates.difference(mshapeKimberley, mshapePilbara,
 
 
 ## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
-procrustes.var.plot(mshapeGroote, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootekimberley[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeGroote, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootekimberley[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrootekimberley", fmt = "png")
 
-procrustes.var.plot(mshapeGroote, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootePilbara[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeGroote, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootePilbara[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrootepilbara", fmt = "png")
 
-procrustes.var.plot(mshapeGroote, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteNT[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeGroote, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteNT[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrooteNT", fmt = "png")
 
-procrustes.var.plot(mshapeGroote, mshapeQLD, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteQLD[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeGroote, mshapeQLD, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrooteQLD[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrooteQLD", fmt = "png")
 
-procrustes.var.plot(mshapeQLD, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDpilbara[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeQLD, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDpilbara[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDPilbara", fmt = "png")
 
-procrustes.var.plot(mshapeQLD, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDNT[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeQLD, mshapeNT, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDNT[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDNT", fmt = "png")
 
-procrustes.var.plot(mshapeQLD, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDKimberley[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeQLD, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDKimberley[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDKimberley", fmt = "png")
 
-procrustes.var.plot(mshapeNT, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTKimberley[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeNT, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTKimberley[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTKimberley", fmt = "png")
 
-procrustes.var.plot(mshapeNT, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTPilbara[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeNT, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTPilbara[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTPilbara", fmt = "png")
 
-procrustes.var.plot(mshapeKimberley, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeKimberleyPilbara[[1]][,"radius"], pt.size = 0.5)
+procrustes.var.plot(mshapeKimberley, mshapePilbara, col = list(grDevices::heat.colors, "black"), col.val =  mshapeKimberleyPilbara[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeKimberleyPilbara", fmt = "png")
+
+#RESIDUAL SHAPE COMPARISONS
+
+#calculate mean shapes of each population 
+
+gpaPilbaracoordsres <- gpares$coords[,,which(gdfres$Population=="Pilbara")]
+mshapePilbarares <- mshape(gpaPilbaracoordsres)
+class(mshapePilbarares) <- "matrix"
+
+gpaNTcoordsres <- gpares$coords[,,which(gdfres$Population=="Northern Territory")]
+mshapeNTres <- mshape(gpaNTcoordsres)
+class(mshapeNTres) <- "matrix"
+
+gpaQLDcoordsres <- gpares$coords[,,which(gdfres$Population=="Queensland")]
+mshapeQLDres <- mshape(gpaQLDcoordsres)
+class(mshapeQLDres) <- "matrix"
+
+gpaKimberleycoordsres <- gpares$coords[,,which(gdfres$Population=="Kimberley")]
+mshapeKimberleyres <- mshape(gpaKimberleycoordsres)
+class(mshapeKimberleyres) <- "matrix"
+
+gpaGrootecoordsres <- gpares$coords[,,which(gdfres$Population=="Groote")]
+mshapeGrooteres <- mshape(gpaGrootecoordsres)
+class(mshapeGrooteres) <- "matrix"
+
+## Calculate the pairwise interlandmark differences among population mean shapes
+mshapeGrootekimberleyres <- coordinates.difference(mshapeGrooteres, mshapeKimberleyres, type = "spherical")
+mshapeGrootePilbarares <- coordinates.difference(mshapeGrooteres, mshapePilbarares, type = "spherical")
+mshapeGrooteNTres <- coordinates.difference(mshapeGrooteres, mshapeNTres, type = "spherical")
+mshapeGrooteQLDres <- coordinates.difference(mshapeGrooteres, mshapeQLDres, type = "spherical")
+mshapeQLDpilbarares <- coordinates.difference(mshapeQLDres, mshapePilbarares, type = "spherical")
+mshapeQLDNTres <- coordinates.difference(mshapeQLDres, mshapeNTres, type = "spherical")
+mshapeQLDKimberleyres <- coordinates.difference(mshapeQLDres, mshapeKimberleyres, type = "spherical")
+mshapeNTKimberleyres <- coordinates.difference(mshapeNTres, mshapeKimberleyres, type = "spherical")
+mshapeNTPilbarares <- coordinates.difference(mshapeNTres, mshapePilbarares, type = "spherical")
+mshapeKimberleyPilbarares <- coordinates.difference(mshapeKimberleyres, mshapePilbarares, type = "spherical")
+
+
+## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
+procrustes.var.plot(mshapeGrooteres, mshapeKimberleyres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeGrootekimberleyres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeGrootekimberleyres", fmt = "png")
+
+procrustes.var.plot(mshapeGrooteres, mshapePilbarares, col = list(grDevices::heat.colors, "black"), col.val =  mshapeGrootePilbarares[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeGrootepilbarares", fmt = "png")
+
+procrustes.var.plot(mshapeGrooteres, mshapeNTres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeGrooteNTres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeGrooteNTres", fmt = "png")
+
+procrustes.var.plot(mshapeGrooteres, mshapeQLDres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeGrooteQLDres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeGrooteQLDres", fmt = "png")
+
+procrustes.var.plot(mshapeQLDres, mshapePilbarares, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDpilbarares[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDPilbarares", fmt = "png")
+
+procrustes.var.plot(mshapeQLDres, mshapeNTres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDNTres[[1]][,"radius"], pt.size = 0.7, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDNTres", fmt = "png")
+
+procrustes.var.plot(mshapeQLDres, mshapeKimberleyres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeQLDKimberleyres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeQLDKimberleyres", fmt = "png")
+
+procrustes.var.plot(mshapeNTres, mshapeKimberleyres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTKimberleyres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTKimberleyres", fmt = "png")
+
+procrustes.var.plot(mshapeNTres, mshapePilbarares, col = list(grDevices::heat.colors, "black"), col.val =  mshapeNTPilbarares[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeNTPilbarares", fmt = "png")
+
+procrustes.var.plot(mshapeKimberleyres, mshapePilbarares, col = list(grDevices::heat.colors, "black"), col.val =  mshapeKimberleyPilbarares[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeKimberleyPilbarares", fmt = "png")
 
 
 ###Distribution map of specimens used in this study labelled by population###
@@ -520,7 +603,7 @@ range(Dhalldataminusisland$Latitude, na.rm = TRUE, finite = TRUE)
 
 sbbox <- make_bbox(lon = Dhalldataminusisland$Longitude , lat = Dhalldataminusisland$Latitude, f = .1)
 
-base <- get_map(location=sbbox, maptype="satellite", source = "google")
+base <- get_map(location=sbbox, maptype="satellit", source = "google", zoom = 7)
 
 map1 <- ggmap(base)
 map1
@@ -531,13 +614,13 @@ map2 <-
   map1+
    geom_point(data=Dhallgps1, 
              aes(x=Dhalldataminusisland.Longitude, y=Dhalldataminusisland.Latitude, fill =Dhalldataminusisland.Population)
-            ,pch=21, size=7, alpha=I(0.7))+
+            ,pch=21, size=20, alpha=I(0.7))+
   theme(legend.position = c(1,0.8), legend.justification = c(0,1), legend.key = element_blank(), legend.title = element_text(size = 20),
         legend.text = element_text(size = 18))+
     labs(fill="Population")
 
 map2
-north2 (map2, .15, .7, scale = 0.1, symbol = 1)
+north2 (map2, .15, .8, scale = 0.2, symbol = 1)
 
 ###FIX ZOOM<, LAT AND LON LIMIT, AND LETTERS SHOWN IN MAP (OR DIFFERENT MAPTYPE)
 ```
@@ -621,9 +704,11 @@ femalecoords <- gpasex$coords[,,which(gdfsex$Sex=="female")]
 mshapefemale <- mshape(femalecoords) 
 class(mshapefemale) <- "matrix"
 
-mshapemalefemale <- coordinates.difference(mshapemale, mshapefemale, type = "spherical")
+mshapefemalemale <- coordinates.difference(mshapefemale, mshapemale, type = "spherical")
 
-procrustes.var.plot(mshapefemale, mshapemale, col = grDevices::heat.colors, col.val = mshapemalefemale[[1]][,"radius"], pt.size = 0.7)
+procrustes.var.plot(mshapefemale, mshapemale, col = list(grDevices::heat.colors, "black"), col.val = mshapefemalemale[[1]][,"radius"], pt.size = 0.5, col.range = c(0, 0.015))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/SuppFig5_sexshapechanges", fmt = "png")
 
 #size-corrected shape differences between sexes, heatplot (Supplementary Figure 4)
 
@@ -634,18 +719,19 @@ femalecoordsres <- gparessex$coords[,,which(gdfressex$Sex=="female")]
 mshapefemaleres <- mshape(femalecoordsres) 
 class(mshapefemaleres) <- "matrix"
 
-mshapemalefemaleres <- coordinates.difference(mshapemaleres, mshapefemaleres, type = "spherical")
+mshapefemalemaleres <- coordinates.difference(mshapefemaleres, mshapemaleres, type = "spherical")
 
-procrustes.var.plot(mshapemaleres, mshapefemaleres, col = grDevices::heat.colors, col.val = mshapemalefemaleres[[1]][,"radius"], pt.size = 0.7)
-
+procrustes.var.plot(mshapefemaleres, mshapemaleres, col = list(grDevices::heat.colors, "black"), col.val = mshapefemalemaleres[[1]][,"radius"], pt.size = 0.5, col.range = c(0, 0.015))
+rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
+rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/SuppFig5_sexshapechanges_res", fmt = "png")
 
 ###POPULATION ANALYSIS OF ALLOMETRY###
 
 
 #Is there allometry in the entire dataset and how much?
 
-fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatus, print.progress = FALSE)
-plotAllometry(fit.size, size = gdfhallucatus$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatus$Population))
+fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
+plotAllometry(fit.size, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size)
 
 #Figure 3: Allometry plot, centroid size (proxy for body size) vs shape score
@@ -656,7 +742,7 @@ fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminus
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
 
-#common allometry across all populations?
+#common allometry across all populations, allometry-corrected shape differences between populations?
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
@@ -699,9 +785,6 @@ array2mat <- function(array,inds,vars){
 
 
 mymat<-array2mat(gpamainland$coords,89,2700)
-
-geo_rda<-vegan::rda(mymat~spat.data)
-anova(geo_rda)
 
 
 
@@ -769,32 +852,33 @@ anova(full_rda)
 
 
 #Build phenograms based on Euclidean distances
-CVAquollspops <- CVA(gdfmainland$coords, groups = gdfmainland$Population, weighting = TRUE, plot = TRUE, rounds = 1000)
-plot(CVAquollspops$CVscores[,1:2], bg=gdfmainland$Population, pch=21, typ="p", asp = 1)
-gpamainland$procD
+CVAquollspops <- CVA(gdfhallucatusminusisland$coords, groups = gdfhallucatusminusisland$Population, weighting = TRUE, plot = TRUE, rounds = 100)
+plot(CVAquollspops$CVscores[,1:2], bg=gdfhallucatusminusisland$Population, pch=21, typ="p", asp = 1)
+gpadhallminusisland$procD
 Euclidist_quollspops <- CVAquollspops$Dist$GroupdistEuclid
 
-Euclidist <- dist(gpamainland$procD, method = "euclidean")
+Euclidist <- dist(gpadhallminusisland$procD, method = "euclidean")
 
-colspop <- rainbow(length(levels(gdfmainland$Population)))
+colspop <- rainbow(length(levels(gdfhallucatusminusisland$Population)))
 library(dendextend)
-ClustLab <- paste(gdfmainland$Population)
+ClustLab <- paste(gdfhallucatusminusisland$Population)
 plotColoredClusters(the.cluster, labs = ClustLab, cols = colspop)
 
-population <- factor(gdfmainland$Population)
+population <- factor(gdfhallucatusminusisland$Population)
 n_population <- length(unique(population))
 cols_4 <- colorspace::rainbow_hcl(n_population)
 col_population <- cols_4[population]
 
 labels_colors(the.cluster) <- col_population[order.dendrogram(the.cluster)]
 
-plot(the.cluster)
+par(cex=2)
+plot(the.cluster, main="", xlab="")
 
 
 legend("topleft", legend = levels(population), fill = cols_4)
 
-the.cluster <- as.dendrogram(hclust(Euclidist_quollspops, method = "average"))
-dend2 <- color_labels(the.cluster, col = colspop, labels = labels(the.cluster)[gdfmainland$Population])
+the.cluster <- as.dendrogram(hclust(Euclidist, method = "average"))
+dend2 <- color_labels(the.cluster, col = col_population, labels = labels(the.cluster)[gdfhallucatusminusisland$Population])
 plot(dend2)
 plot(the.cluster)
 labels_colors(the.cluster)
@@ -803,7 +887,7 @@ plot(upgma(Euclidist_quollspops),main="UPGMA")
 
 
 
-clusteronmeans<-function(x,group,method="euclidean",FUN=mean,nj=F,title=NULL,tip.color=1,cex=1){
+clusteronmeans<-function(x,group,method="euclidean",FUN=mean,nj=F,title=NULL,tip.color=1,cex=2){
  library(MASS)
  library(car)
  library(phangorn)
@@ -825,7 +909,7 @@ x11()
  as.matrix(dist(x3[,-1,drop=F],method=method))
 }
 
-popclustupgma <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population)
+popclustupgma <- clusteronmeans(gpadhallminusisland$procD, group = gdfhallucatusminusisland$Population)
 
 
 popclustnj <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population, nj = T)
@@ -841,12 +925,12 @@ islmainbplot <- ggplot(df.hallucatusislmain,
        aes(x = gdfhallucatus.main_island, 
            y = gdfhallucatus.Csize, 
            fill = gdfhallucatus.main_island)) +
-  scale_fill_manual(values = c("gray84", "gray84")) +
+  scale_fill_manual(values = c("gray88", "gray62")) +
   labs(x= NULL, y= "Centroid size",
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 12), axis.title.y = element_text(size=12))
+  theme(legend.position = "none", axis.text = element_text(size = 16), axis.title.y = element_text(size=16))
 
 
 df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
@@ -855,12 +939,12 @@ Sexbplot <- ggplot(df.hallucatussex,
                        aes(x = gdfsex.Sex, 
                            y = gdfsex.Csize, 
                            fill = gdfsex.Sex)) +
-  scale_fill_manual(values = c("gray84", "gray84")) +
+  scale_fill_manual(values = c("gray88", "gray62")) +
   labs(x= NULL, y= NULL,
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 12))
+  theme(legend.position = "none", axis.text = element_text(size = 16))
 
 
 df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
@@ -873,7 +957,7 @@ Popbplot <-   ggplot(df.hallucatuspop,
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 12))
+  theme(legend.position = "none", axis.text = element_text(size = 13))
 
 
 multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
