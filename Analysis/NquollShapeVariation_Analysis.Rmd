@@ -73,11 +73,11 @@ dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
 
 #retrieve vegetation type from spatial data of the Atlas of Living Australia
 Dhallgps <- data.frame(Dhallucatusdata$Latitude, Dhallucatusdata$Longitude)
-layers <- c("cl620", "cl618", "el819", "el1077", "el674")
+layers <- c("cl620", "cl618", "el830", "el1077", "el674")
 vegtype <- intersect_points(Dhallgps, layers)
 vegtype$vegetationTypesPresent<-as.factor(vegtype$vegetationTypesPresent)
 vegtype$landCover<-as.factor(vegtype$landCover)
-vegtype$distanceToCoast[is.na(vegtype$distanceToCoast)]<-0
+vegtype$distanceToPermanentWaterWeighted[is.na(vegtype$distanceTowater)]<-0
 vegtype$elevation[is.na(vegtype$elevation)]<-0
 
 
@@ -97,7 +97,7 @@ vegtype$vegetationTypesPresent==vegtype2$Dhallucatusdata.Vegetation_type
 vegtypefill <- coalesce(vegtype2$Dhallucatusdata.Vegetation_type, vegtype$vegetationTypesPresent)
 
 Dhallucatusdata$landCover <- vegtype$landCover
-Dhallucatusdata$distanceToCoast <- vegtype$distanceToCoast
+Dhallucatusdata$distanceTowater <- vegtype$distanceToPermanentWaterWeighted
 Dhallucatusdata$Vegetation_type <- vegtypefill
 Dhallucatusdata$primprod <- vegtype$grossPrimaryProductivity20120313
 Dhallucatusdata$elevation <- vegtype$elevation
@@ -131,7 +131,7 @@ gdfhallucatus <- geomorph.data.frame(gpahallucatus, Population = Dhallucatusdata
                            Longitude = Dhallucatusdata$Longitude, main_island = Dhallucatusdata$Island_Mainland, IBRA = Dhallucatusdata$IBRA_7_Regions,
                            Datcoll = Dhallucatusdata$Date_collected, conservationstatus = Dhallucatusdata$Conservation_status,
                            Aridity = Dhallucatusdata$Aridity_index, precipitation = Dhallucatusdata$Precipitation, 
-                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, landcover = Dhallucatusdata$landCover, distcoast = Dhallucatusdata$distanceToCoast, elevation = Dhallucatusdata$elevation, climate = Dhallucatusdata$Climate_classification,
+                           habitat = Dhallucatusdata$Forest_habitat, vegtype = Dhallucatusdata$Vegetation_type, landcover = Dhallucatusdata$landCover, distwater = Dhallucatusdata$distanceTowater, elevation = Dhallucatusdata$elevation, climate = Dhallucatusdata$Climate_classification,
                            ppworldclim = Dhallucatusworldclim$Prec, tempworldclim = Dhallucatusworldclim$Temp, Species = Dhallucatusdata$Species)
 
 
@@ -174,7 +174,7 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
                            Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
-                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast, elevation = Dhalldataminusisland$elevation) 
+                           ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, Distancetowater = Dhalldataminusisland$distanceTowater, elevation = Dhalldataminusisland$elevation) 
 ```
 ```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
 # subtraction of island specimens, data preparation
@@ -206,8 +206,7 @@ gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Popula
                            Longitude = Mainlanddata$Longitude, main_island = Mainlanddata$Island_Mainland, IBRA = Mainlanddata$IBRA_7_Regions,
                            Datcoll = Mainlanddata$Date_collected, conservationstatus = Mainlanddata$Conservation_status,
                            Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
-                           habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type, climate = Mainlanddata$Climate_classification,
-                           Species = Mainlanddata$Species, precworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, landcover = Mainlanddata$landCover, DistancetoCoast = Mainlanddata$distanceToCoast, primprod = Mainlanddata$primprod, Mainlanddata$elevation) 
+                           habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type,landcover = Mainlanddata$landCover, distwater = Mainlanddata$distanceTowater, elevation = Mainlanddata$elevation, climate = Mainlanddata$Climate_classification, ppworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, primprod = Mainlanddata$primprod, Species = Mainlanddata$Species) 
 
 #ProcANOVA on shape with lon and lat factors
 
@@ -239,12 +238,12 @@ lmsizeppmain <- lm(gdfmainland$Csize~Dhallucatusworldclimmain$Prec)
 anova(lmsizeppmain)
 summary(lmsizeppmain)
 
-fitshapedistcoastmain <- procD.lm(gdfmainland$coords~Mainlanddata$distanceToCoast, effect.type = "F")
-summary(fitshapedistcoastmain)
+fitshapedistwatermain <- procD.lm(gdfmainland$coords~Mainlanddata$distanceTowater, effect.type = "F")
+summary(fitshapedistwatermain)
 
-lmsizedistcoastmain <- lm(gdfmainland$Csize~Mainlanddata$distanceToCoast)
-anova(lmsizedistcoastmain)
-summary(lmsizedistcoastmain)
+lmsizedistwatermain <- lm(gdfmainland$Csize~Mainlanddata$distanceTowater)
+anova(lmsizedistwatermain)
+summary(lmsizedistwatermain)
 
 fitshapeelevmain <- procD.lm(gdfmainland$coords~Mainlanddata$elevation, effect.type = "F")
 summary(fitshapeelevmain)
@@ -271,11 +270,40 @@ summary(lmsizevegtypemain)
 
 ```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
 
-disparitymainisl <- morphol.disparity(coords ~ 1, groups= ~ main_island, data = gdfhallucatus, iter=999)
+fitpop <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
+
+disparitypops <- morphol.disparity(fitpop, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
+summary(disparitypops)
+
+PWpop <- pairwise(fitpop, groups = gdfhallucatusminusisland$Population)
+
+PWpop.sum <- summary(PWpop, test.type = "var")
+PWpop.sum$summary.table
+
+
+
+fitsex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
+
+disparitysex <- morphol.disparity(fitsex, groups = ~ Sex, data = gdfsex, iter = 999)
+summary(disparitysex)
+
+PWsex <- pairwise(fitsex, groups = gdfsex$Sex)
+
+PWsex.sum <- summary(PWsex, test.type = "var")
+PWsex.sum$summary.table
+
+
+
+fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
+
+disparitymainisl <- morphol.disparity(fitisl, groups= ~ main_island, data = gdfhallucatus, iter=999)
 summary(disparitymainisl)
 
-disparitypops <- morphol.disparity(coords ~ 1, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
-summary(disparitypops)
+PWisl <- pairwise(fitisl, groups = gdfhallucatus$main_island)
+
+PWisl.sum <- summary(PWisl, test.type = "var")
+PWisl.sum$summary.table
+
 
 ```
 
@@ -286,8 +314,21 @@ PCAminusisland <- plotTangentSpace(gdfhallucatusminusisland$coords, warpgrids = 
 summary(PCAminusisland)
 
 
-PCAminusislandplot <- plot(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], bg = gdfhallucatusminusisland$Sex, pch = 21, cex = 1.5, asp = T, xlab="Principal Component 1 (24.58%)", ylab="Principal Component 2 (11.58%)")
+PCAminusislandplot <- plot(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], bg = gdfhallucatusminusisland$Population, pch = 21, cex = 1.5, asp = T, xlab="Principal Component 1 (24.58%)", ylab="Principal Component 2 (11.58%)")
 legend("topright", legend=unique(gdfhallucatusminusisland$Population), pch=19, col=unique(gdfhallucatusminusisland$Population), cex=1.3) #run in console
+
+
+Population <- gdfhallucatusminusisland$Population
+Sex <- gdfhallucatusminusisland$Sex
+dataPCA <- data.frame(PCAminusisland$pc.scores[,1], PCAminusisland$pc.scores[,2], Population, Sex)
+
+plotPCA <- ggplot(dataPCA, aes(x=PCAminusisland.pc.scores...1., y=PCAminusisland.pc.scores...2., colour = Population, shape = Sex)) +
+  labs(x = "PC 1 (24.58%)", y = "PC 2 (11.58%)") +
+  geom_point(size = 8, alpha = 0.8) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.text = element_text(size = 25), legend.title = element_text(size = 25), axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), axis.text = element_text(size = 20), legend.justification = "center")
+
+plot(plotPCA)
 ```
 
 ``` {r Figure 1 shape changes associated to PC1 and allometry, include=TRUE} 
@@ -333,21 +374,31 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 
 fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit1)
-PW1<- pairwise(fit1, groups = Dhalldataminusisland$Population)
+PW1 <- pairwise(fit1, groups = Dhalldataminusisland$Population)
+sumPW1 <- summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+sumPW1
 
-summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
+PW1.pvals <- sumPW1$pairwise.tables$P[c(2:5,8:10,14:15,20)]
+PW1.pvals.adj <- p.adjust(PW1.pvals, "bonferroni")
+PW1.pvals.adj
+
+sumPW1.var <- summary(PW1, test.type = "var", confidence = 0.95, stat.table = FALSE)
+sumPW1.var
 
 fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit2)
 PW2<- pairwise(fit2, groups = Dhalldataminusisland$Population)
 
-summary(PW2, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+sumPW2 <- summary(PW2, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+sumPW2
 
 
 #Are there differences in shape and size between island and mainland individuals?
 
 fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
-summary(fitisl)
+sumPW3 <- summary(fitisl, test.type ="dist")
+sumPW3
+
 
 fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
 anova(fitsizeisl)
@@ -371,7 +422,7 @@ gdfres <- geomorph.data.frame(gpares, Population = Dhalldataminusisland$Populati
                            Datcoll = Dhalldataminusisland$Date_collected, conservationstatus = Dhalldataminusisland$Conservation_status,
                            Aridity = Dhalldataminusisland$Aridity_index, precipitation = Dhalldataminusisland$Precipitation, 
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
-                           Species = Dhalldataminusisland$Species,  landcover = Dhalldataminusisland$landCover, DistancetoCoast = Dhalldataminusisland$distanceToCoast)
+                           Species = Dhalldataminusisland$Species,  landcover = Dhalldataminusisland$landCover, Distancetowater = Dhalldataminusisland$distanceTowater)
 
 PCAres <- plotTangentSpace(gdfres$coords, warpgrids = FALSE, mesh = NULL, label = TRUE, groups = gdfres$Population, legend = FALSE)
 
@@ -642,7 +693,7 @@ gdfsex <- geomorph.data.frame(gpasex, Population = Sexdata$Population,
                            Longitude = Sexdata$Longitude, main_island = Sexdata$Island_Mainland, IBRA= Sexdata$IBRA_7_Regions,
                            Datcoll = Sexdata$Date_collected, conservationstatus = Sexdata$Conservation_status,
                            Aridity = Sexdata$Aridity_index, precipitation = Sexdata$Precipitation, 
-                           habitat = Sexdata$Forest_habitat, vegtype = Sexdata$Vegetation_type, climate = Sexdata$Climate_classification, landcover = Sexdata$landCover, DistancetoCoast = Sexdata$distanceToCoast) 
+                           habitat = Sexdata$Forest_habitat, vegtype = Sexdata$Vegetation_type, climate = Sexdata$Climate_classification, landcover = Sexdata$landCover, Distancetowater = Sexdata$distanceTowater) 
 
 #PCA with sexes labelled
 
@@ -731,16 +782,29 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 #Is there allometry in the entire dataset and how much?
 
 fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
-plotAllometry(fit.size, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
+fit.size.plot <- plotAllometry(fit.size, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size)
 
 #Figure 3: Allometry plot, centroid size (proxy for body size) vs shape score
 
+Population <- gdfhallucatusminusisland$Population
+Sex <- gdfhallucatusminusisland$Sex
+dataallometryplot <- data.frame(fit.size.plot$size.var, fit.size.plot$RegScore, Population, Sex)
+
+plotallom <- ggplot(dataallometryplot, aes(x=fit.size.plot.size.var, y=fit.size.plot.RegScore, colour = Population, shape = Sex)) +
+  labs(x = "Centroid Size", y = "Shape Score") +
+  geom_point(size = 8, alpha = 0.8) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.text = element_text(size = 25), legend.title = element_text(size = 25), axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), axis.text = element_text(size = 20), legend.justification = "center")
+
+plot(plotallom)
 #unique allometries by population?
 
 fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminusisland, print.progress = FALSE, effect.type = "F")
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size.uni)
+
+
 
 #common allometry across all populations, allometry-corrected shape differences between populations?
 
@@ -914,6 +978,12 @@ popclustupgma <- clusteronmeans(gpadhallminusisland$procD, group = gdfhallucatus
 
 popclustnj <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population, nj = T)
 
+procD.mat <- as.matrix(gpadhallminusisland$procD)
+dendboot <- aboot(procD.mat)
+
+meansdistmat <- as.matrix(Euclidist_quollspops)
+dendboot <- aboot(meansdistmat, )
+
 
 ```
 
@@ -930,7 +1000,7 @@ islmainbplot <- ggplot(df.hallucatusislmain,
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 16), axis.title.y = element_text(size=16))
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.title.y = element_text(size=25))
 
 
 df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
@@ -944,7 +1014,7 @@ Sexbplot <- ggplot(df.hallucatussex,
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 16))
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank())
 
 
 df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
@@ -957,7 +1027,8 @@ Popbplot <-   ggplot(df.hallucatuspop,
        title= NULL) +
   geom_boxplot() +
   theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 13))
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank()) +
+  scale_x_discrete(labels=c("Groote" = "GTE", "Kimberley" = "KIM", "Pilbara"="PIL", "Queensland"="QLD", "Northern Territory"="NT"))
 
 
 multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
