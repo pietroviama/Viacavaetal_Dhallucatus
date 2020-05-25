@@ -7,7 +7,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = '.../Specimens', echo = TRUE)
+knitr::opts_knit$set(root.dir = '.../Specimens', echo = FALSE)
 
 #load libraries
 
@@ -50,7 +50,7 @@ is.factor(Data.pops) # check that it is a factor
 #give museum ID row names to quolls data
 rownames(quollsdata)<-quollsdata$Museum_ID
 
-####Rearrange coordinate names and classifier file names in the same order
+#Rearrange coordinate names and classifier file names in the same order
 
 names_array <- dimnames(A)[[3]]
 names_classifier <- rownames(quollsdata)
@@ -71,36 +71,37 @@ Dhallucatusdata <- droplevels(Dhallucatusdata)
 #check that specimens ID in coords array mirror specimen ID in classifier file
 dimnames(Dhallucatuscoords)[[3]]==rownames(Dhallucatusdata)
 
-#retrieve vegetation type from spatial data of the Atlas of Living Australia
+#retrieve vegetation type, land cover, distance to permanent water, primary productivity and elevation from spatial data of the Atlas of Living Australia and integrate in data frame
+
 Dhallgps <- data.frame(Dhallucatusdata$Latitude, Dhallucatusdata$Longitude)
-layers <- c("cl620", "cl618", "el830", "el1077", "el674")
-vegtype <- intersect_points(Dhallgps, layers)
-vegtype$vegetationTypesPresent<-as.factor(vegtype$vegetationTypesPresent)
-vegtype$landCover<-as.factor(vegtype$landCover)
-vegtype$distanceToPermanentWaterWeighted[is.na(vegtype$distanceTowater)]<-0
-vegtype$elevation[is.na(vegtype$elevation)]<-0
+evariables <- c("cl620", "cl618", "el830", "el1077", "el674")
+retrieved.evariables <- intersect_points(Dhallgps, evariables)
+retrieved.evariables$vegetationTypesPresent<-as.factor(retrieved.evariables$vegetationTypesPresent)
+retrieved.evariables$landCover<-as.factor(retrieved.evariables$landCover)
+retrieved.evariables$distanceToPermanentWaterWeighted[is.na(retrieved.evariables$distanceToPermanentWaterWeighted)]<-0
+retrieved.evariables$elevation[is.na(retrieved.evariables$elevation)]<-0
 
 
-vegtype2 <- data.frame(Dhallucatusdata$Museum_ID, Dhallucatusdata$Latitude, Dhallucatusdata$Longitude, Dhallucatusdata$Vegetation_type)
+data.evariables <- data.frame(Dhallucatusdata$Museum_ID, Dhallucatusdata$Latitude, Dhallucatusdata$Longitude, Dhallucatusdata$Vegetation_type)
 
-levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt open forests"]<-"Eucalyptus open forest"
-levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt open woodlands"]<-"Eucalyptus open woodlands"
-levels(vegtype2$Dhallucatusdata.Vegetation_type)[levels(vegtype2$Dhallucatusdata.Vegetation_type)=="Eucalypt woodlands"]<-"Eucalyptus woodlands"
-levels(vegtype$vegetationTypesPresent)[levels(vegtype$vegetationTypesPresent)==""]<-"Unknown/no data"
-levels(vegtype$landCover)[levels(vegtype$landCover)==""]<-"Unknown/no data"
+levels(data.evariables$Dhallucatusdata.Vegetation_type)[levels(data.evariables$Dhallucatusdata.Vegetation_type)=="Eucalypt open forests"]<-"Eucalyptus open forest"
+levels(data.evariables$Dhallucatusdata.Vegetation_type)[levels(data.evariables$Dhallucatusdata.Vegetation_type)=="Eucalypt open woodlands"]<-"Eucalyptus open woodlands"
+levels(data.evariables$Dhallucatusdata.Vegetation_type)[levels(data.evariables$Dhallucatusdata.Vegetation_type)=="Eucalypt woodlands"]<-"Eucalyptus woodlands"
+levels(retrieved.evariables$vegetationTypesPresent)[levels(retrieved.evariables$vegetationTypesPresent)==""]<-"Unknown/no data"
+levels(retrieved.evariables$landCover)[levels(retrieved.evariables$landCover)==""]<-"Unknown/no data"
 
 
-vegtype2$Dhallucatusdata.Vegetation_type <- factor(vegtype2$Dhallucatusdata.Vegetation_type, levels=levels(vegtype$vegetationTypesPresent))
+data.evariables$Dhallucatusdata.Vegetation_type <- factor(data.evariables$Dhallucatusdata.Vegetation_type, levels=levels(retrieved.evariables$vegetationTypesPresent))
 
-vegtype$vegetationTypesPresent==vegtype2$Dhallucatusdata.Vegetation_type
+retrieved.evariables$vegetationTypesPresent==data.evariables$Dhallucatusdata.Vegetation_type
 
-vegtypefill <- coalesce(vegtype2$Dhallucatusdata.Vegetation_type, vegtype$vegetationTypesPresent)
+vegtypefill <- coalesce(data.evariables$Dhallucatusdata.Vegetation_type, retrieved.evariables$vegetationTypesPresent)
 
-Dhallucatusdata$landCover <- vegtype$landCover
-Dhallucatusdata$distanceTowater <- vegtype$distanceToPermanentWaterWeighted
+Dhallucatusdata$landCover <- retrieved.evariables$landCover
+Dhallucatusdata$distanceTowater <- retrieved.evariables$distanceToPermanentWaterWeighted
 Dhallucatusdata$Vegetation_type <- vegtypefill
-Dhallucatusdata$primprod <- vegtype$grossPrimaryProductivity20120313
-Dhallucatusdata$elevation <- vegtype$elevation
+Dhallucatusdata$primprod <- retrieved.evariables$grossPrimaryProductivity20120313
+Dhallucatusdata$elevation <- retrieved.evariables$elevation
 
 ```
 
@@ -111,6 +112,8 @@ Dhallucatusdata$elevation <- vegtype$elevation
 
 gpahallucatus<-gpagen(Dhallucatuscoords, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
                    max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+#extract climatic variables (precipitation and temperature)
 
 rclim<- getData("worldclim",var="bio",res=10) #run in console
 
@@ -125,6 +128,8 @@ coordsgps <- data.frame(lons, lats)
 valuestemp <- extract(rclim,coordsgps)
 
 Dhallucatusworldclim <- cbind.data.frame(coordsgps,valuestemp)
+
+#geomorph data frame
 
 gdfhallucatus <- geomorph.data.frame(gpahallucatus, Population = Dhallucatusdata$Population, 
                            Sex = Dhallucatusdata$Sex, MuseumID = Dhallucatusdata$Museum_ID, Latitude = Dhallucatusdata$Latitude, 
@@ -177,7 +182,7 @@ gdfhallucatusminusisland <- geomorph.data.frame(gpadhallminusisland, Population 
                            ppworldclim = Dhallucatusworldclimminusisland$Prec, tempworldclim = Dhallucatusworldclimminusisland$Temp, Species = Dhalldataminusisland$Species, Dhalldataminusisland, landcover = Dhalldataminusisland$landCover, Distancetowater = Dhalldataminusisland$distanceTowater, elevation = Dhalldataminusisland$elevation) 
 ```
 ```{r test of shape and size differences associated with latitude, longitude, temperature and precipiation}
-# subtraction of island specimens, data preparation
+# subtraction of all island specimens, data preparation
 
 Mainlanddata <- Dhallucatusdata[-which(Dhallucatusdata$Island_Mainland=="island"),]
 Mainlanddata <- droplevels(Mainlanddata)
@@ -208,7 +213,7 @@ gdfmainland <- geomorph.data.frame(gpamainland, Population = Mainlanddata$Popula
                            Aridity = Mainlanddata$Aridity_index, precipitation = Mainlanddata$Precipitation, 
                            habitat = Mainlanddata$Forest_habitat, vegtype = Mainlanddata$Vegetation_type,landcover = Mainlanddata$landCover, distwater = Mainlanddata$distanceTowater, elevation = Mainlanddata$elevation, climate = Mainlanddata$Climate_classification, ppworldclim = Dhallucatusworldclimmain$Prec, tempworldclim = Dhallucatusworldclimmain$Temp, primprod = Mainlanddata$primprod, Species = Mainlanddata$Species) 
 
-#ProcANOVA on shape with lon and lat factors
+#ProcANOVA of environmental and geophysical variables on shape (Table 2)
 
 fitshapelat<-procD.lm(gdfmainland$coords~latsmain, effect.type = "F")
 summary(fitshapelat)
@@ -264,50 +269,13 @@ summary(fitshapevegtypemain)
 
 lmsizevegtypemain <- lm(gdfmainland$Csize~Mainlanddata$Vegetation_type)
 anova(lmsizevegtypemain)
-summary(lmsizevegtypemain)
 
 ```
 
-```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
-
-fitpop <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
-
-disparitypops <- morphol.disparity(fitpop, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
-summary(disparitypops)
-
-PWpop <- pairwise(fitpop, groups = gdfhallucatusminusisland$Population)
-
-PWpop.sum <- summary(PWpop, test.type = "var")
-PWpop.sum$summary.table
-
-
-
-fitsex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
-
-disparitysex <- morphol.disparity(fitsex, groups = ~ Sex, data = gdfsex, iter = 999)
-summary(disparitysex)
-
-PWsex <- pairwise(fitsex, groups = gdfsex$Sex)
-
-PWsex.sum <- summary(PWsex, test.type = "var")
-PWsex.sum$summary.table
-
-
-
-fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
-
-disparitymainisl <- morphol.disparity(fitisl, groups= ~ main_island, data = gdfhallucatus, iter=999)
-summary(disparitymainisl)
-
-PWisl <- pairwise(fitisl, groups = gdfhallucatus$main_island)
-
-PWisl.sum <- summary(PWisl, test.type = "var")
-PWisl.sum$summary.table
-
-
-```
 
 ```{r morphological differences between populations, exploratory analysis PCA, include=TRUE}  
+
+#Principal Components Analysis on all mainland and Groote Eylandt specimens (Supplementary Figure 3)
 
 PCAminusisland <- plotTangentSpace(gdfhallucatusminusisland$coords, warpgrids = FALSE, mesh = FALSE, groups = gdfhallucatusminusisland$Population, legend = TRUE)
 
@@ -332,7 +300,7 @@ plot(plotPCA)
 ```
 
 ``` {r Figure 1 shape changes associated to PC1 and allometry, include=TRUE} 
-#Figure 1a: shape changes associated with PC1 
+#shape changes associated with PC1 (Figure 1a) 
 
 mshapePC1minmax<-coordinates.difference(PCAminusisland$pc.shapes$PC1min,PCAminusisland$pc.shapes$PC1max, type = "spherical")
 
@@ -340,7 +308,7 @@ procrustes.var.plot(PCAminusisland$pc.shapes$PC1min, PCAminusisland$pc.shapes$PC
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_PC1variation", fmt = "png")
 
-#Figure 1b: shape changes associated with allometry 
+#shape changes associated with allometry (Figure 1b)
 
 predshapesize <- shape.predictor(gpadhallminusisland$coords, x=gpadhallminusisland$Csize, Intercept = TRUE, predmin = min(gpadhallminusisland$Csize), predmax = max(gpadhallminusisland$Csize))
 
@@ -349,7 +317,7 @@ procrustes.var.plot(predshapesize$predmin, predshapesize$predmax, col = list(grD
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig1_Allometryvariation", fmt = "png")
 
-#shape changes associated with precipitation
+#shape changes associated with precipitation (Figure 1c)
 
 predshapepp <- shape.predictor(gpadhallminusisland$coords, x=gdfhallucatusminusisland$ppworldclim, Intercept = TRUE, predmin = min(gdfhallucatusminusisland$ppworldclim), predmax = max(gdfhallucatusminusisland$ppworldclim))
 
@@ -372,18 +340,19 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 
 ``` {r Procrustes ANOVA and pairwise comparisons between shape and centroid size means of each population, include=TRUE}
 
+#Procrustes ANOVA and pairwise comparisons between shape means of each population (Figure 2)
+
 fit1 <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit1)
 PW1 <- pairwise(fit1, groups = Dhalldataminusisland$Population)
 sumPW1 <- summary(PW1, test.tpe = "dist", confidence = 0.95, stat.table = FALSE)
 sumPW1
-
+#Bonferroni correction
 PW1.pvals <- sumPW1$pairwise.tables$P[c(2:5,8:10,14:15,20)]
 PW1.pvals.adj <- p.adjust(PW1.pvals, "bonferroni")
 PW1.pvals.adj
 
-sumPW1.var <- summary(PW1, test.type = "var", confidence = 0.95, stat.table = FALSE)
-sumPW1.var
+#pairwise comparison between centroid size means of each population (Supplementary Table 2)
 
 fit2 <- procD.lm(gpadhallminusisland$Csize~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 summary(fit2)
@@ -433,7 +402,11 @@ summary(PCAres)
 fit1resshape <- procD.lm(gpares$coords~Dhalldataminusisland$Population)
 anova(fit1resshape)
 PW1resshape <- pairwise(fit1resshape, groups = Dhalldataminusisland$Population)
-summary(PW1resshape, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+sumPW1resshape <- summary(PW1resshape, test.type = "dist", confidence = 0.95, stat.table = FALSE)
+
+PW1resshape.pvals <- sumPW1resshape$pairwise.tables$P[c(2:5,8:10,14:15,20)]
+PW1resshape.pvals.adj <- p.adjust(PW1resshape.pvals, "bonferroni")
+PW1resshape.pvals.adj
 
 ```
 
@@ -823,6 +796,49 @@ legend("bottomright", legend=unique(gdfhallucatusminusisland$Sex), pch=19, col=u
 
 
 ```
+```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
+
+fitpop <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
+
+disparitypops <- morphol.disparity(fitpop, groups = ~ Population, data = gdfhallucatusminusisland, iter = 999)
+summary(disparitypops)
+
+PWpop <- pairwise(fitpop, groups = gdfhallucatusminusisland$Population)
+
+PWpop.sum <- summary(PWpop, test.type = "var")
+PWpop.sum$summary.table
+
+PWpop.pvals <- PWpop.sum$pairwise.tables$P[c(2:5,8:10,14:15,20)]
+PWpop.pvals.adj <- p.adjust(PWpop.pvals, "bonferroni")
+PWpop.pvals.adj
+
+#sumPW1.var <- summary(PW1, test.type = "var", confidence = 0.95, stat.table = FALSE)
+#sumPW1.var
+
+fitsex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
+
+disparitysex <- morphol.disparity(fitsex, groups = ~ Sex, data = gdfsex, iter = 999)
+summary(disparitysex)
+
+PWsex <- pairwise(fitsex, groups = gdfsex$Sex)
+
+PWsex.sum <- summary(PWsex, test.type = "var")
+PWsex.sum$summary.table
+
+
+
+fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
+
+disparitymainisl <- morphol.disparity(fitisl, groups= ~ main_island, data = gdfhallucatus, iter=999)
+summary(disparitymainisl)
+
+PWisl <- pairwise(fitisl, groups = gdfhallucatus$main_island)
+
+PWisl.sum <- summary(PWisl, test.type = "var")
+PWisl.sum$summary.table
+
+
+```
 
 
 
@@ -854,7 +870,7 @@ mymat<-array2mat(gpamainland$coords,89,2700)
 
 ### Figure 4: full variation partitioning model, from vegan library, test for constrained variation
 
-mainprectemp <- data.frame(gdfmainland$precworldclim, gdfmainland$tempworldclim/10)
+mainprectemp <- data.frame(gdfmainland$ppworldclim, gdfmainland$tempworldclim/10)
 
 matprectemp <- as.matrix(mainprectemp)
 
@@ -985,6 +1001,29 @@ meansdistmat <- as.matrix(Euclidist_quollspops)
 dendboot <- aboot(meansdistmat, )
 
 
+# compute the pairwise Euclidean distances between specimens
+D1<-dist(gpadhallminusisland$procD, "euclidean")
+# perform the clustering using UPGMA ("average"
+cluster<-hclust(D1, method="average")
+# compute the distances along the branches
+D2<-cophenetic(cluster)
+# compute the correlation
+cor(D1,D2)
+# draw the dendrogram
+plot(cluster,hang=0.1)
+
+library(ape)
+D2<-fastme.bal(Euclidist_quollspops)
+plot(D2)
+
+# perform the clustering using UPGMA ("average"
+cluster<-hclust(Euclidist_quollspops, method="average")
+# compute the distances along the branches
+D2<-cophenetic(cluster)
+# compute the correlation
+cor(D1,D2)
+# draw the dendrogram
+plot(cluster,hang=0.1)
 ```
 
 ``` {r boxplot figure, include = TRUE}
