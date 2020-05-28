@@ -362,19 +362,21 @@ sumPW2 <- summary(PW2, test.type = "dist", confidence = 0.95, stat.table = FALSE
 sumPW2
 
 
-#Are there differences in shape and size between island and mainland individuals?
+#Are there differences in shape and size between island and mainland individuals? (Table 1 and Figure 3)
 
 fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
 sumPW3 <- summary(fitisl, test.type ="dist")
 sumPW3
 
 
-fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland)
+fitsizeisl <- lm(gpahallucatus$Csize~Dhallucatusdata$Island_Mainland) 
 anova(fitsizeisl)
 summary(fitsizeisl)
 ```
 
 ```{r calculate residual shape and test residual shape differences between populations and pairwise comparisons}
+
+#calculate residual shape
 
 fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
 
@@ -382,8 +384,12 @@ main_residuals3D <- arrayspecs(fit.size$residuals, 900, 3)
 
 allom_resplusconsensus <- main_residuals3D + array(gpadhallminusisland$consensus,dim(main_residuals3D))
 
+#Generalized Procrusted Analysis on residual shape
+
 gpares<-gpagen(allom_resplusconsensus, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
                    max.iter = NULL, ProcD = TRUE, Proj = TRUE, print.progress = TRUE)
+
+#geomorph data frame for residual shape data
 
 gdfres <- geomorph.data.frame(gpares, Population = Dhalldataminusisland$Population, 
                            Sex = Dhalldataminusisland$Sex, MuseumID = Dhalldataminusisland$Museum_ID, Latitude = Dhalldataminusisland$Latitude, 
@@ -393,11 +399,14 @@ gdfres <- geomorph.data.frame(gpares, Population = Dhalldataminusisland$Populati
                            habitat = Dhalldataminusisland$Forest_habitat, vegtype = Dhalldataminusisland$Vegetation_type, climate = Dhalldataminusisland$Climate_classification,
                            Species = Dhalldataminusisland$Species,  landcover = Dhalldataminusisland$landCover, Distancetowater = Dhalldataminusisland$distanceTowater)
 
+
+#Principal Components Analysis on residual shape labeling populations
+
 PCAres <- plotTangentSpace(gdfres$coords, warpgrids = FALSE, mesh = NULL, label = TRUE, groups = gdfres$Population, legend = FALSE)
 
 summary(PCAres)
 
-#shaperesiduals vs pop
+#Procrustes ANOVA of population identity on residual shape and pairwise comparisons among populations (Figure 2)
 
 fit1resshape <- procD.lm(gpares$coords~Dhalldataminusisland$Population)
 anova(fit1resshape)
@@ -412,7 +421,8 @@ PW1resshape.pvals.adj
 
 ```{r Figure 2: Heat plot visualizations of mean shape differences and residual mean shape differences between between populations,and distribution map of specimens used for this Figure with populations labelled, include=TRUE}
 
-#calculate mean shapes of each population 
+#calculate mean shapes of each population
+
 gpaPilbaracoords <- gpadhallminusisland$coords[,,which(gdfhallucatusminusisland$Population=="Pilbara")]
 mshapePilbara <- mshape(gpaPilbaracoords)
 class(mshapePilbara) <- "matrix"
@@ -434,6 +444,7 @@ mshapeGroote <- mshape(gpaGrootecoords)
 class(mshapeGroote) <- "matrix"
 
 ## Calculate the pairwise interlandmark differences among population mean shapes
+
 mshapegrootekimberley <- coordinates.difference(mshapeGroote, mshapeKimberley, type = "spherical")
 mshapegrootePilbara <- coordinates.difference(mshapeGroote, mshapePilbara, type = "spherical")
 mshapegrooteNT <- coordinates.difference(mshapeGroote, mshapeNT, type = "spherical")
@@ -446,7 +457,8 @@ mshapeNTPilbara <- coordinates.difference(mshapeNT, mshapePilbara, type = "spher
 mshapeKimberleyPilbara <- coordinates.difference(mshapeKimberley, mshapePilbara, type = "spherical")
 
 
-## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
+## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences (absolute color range from 0 to maximum shape change in all pairwise differences) (Figure 2)
+
 procrustes.var.plot(mshapeGroote, mshapeKimberley, col = list(grDevices::heat.colors, "black"), col.val =  mshapegrootekimberley[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapegrootekimberley", fmt = "png")
@@ -489,7 +501,7 @@ rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/An
 
 #RESIDUAL SHAPE COMPARISONS
 
-#calculate mean shapes of each population 
+#calculate mean residual shapes of each population 
 
 gpaPilbaracoordsres <- gpares$coords[,,which(gdfres$Population=="Pilbara")]
 mshapePilbarares <- mshape(gpaPilbaracoordsres)
@@ -511,7 +523,8 @@ gpaGrootecoordsres <- gpares$coords[,,which(gdfres$Population=="Groote")]
 mshapeGrooteres <- mshape(gpaGrootecoordsres)
 class(mshapeGrooteres) <- "matrix"
 
-## Calculate the pairwise interlandmark differences among population mean shapes
+## Calculate the pairwise interlandmark differences among population mean residual shapes
+
 mshapeGrootekimberleyres <- coordinates.difference(mshapeGrooteres, mshapeKimberleyres, type = "spherical")
 mshapeGrootePilbarares <- coordinates.difference(mshapeGrooteres, mshapePilbarares, type = "spherical")
 mshapeGrooteNTres <- coordinates.difference(mshapeGrooteres, mshapeNTres, type = "spherical")
@@ -524,7 +537,8 @@ mshapeNTPilbarares <- coordinates.difference(mshapeNTres, mshapePilbarares, type
 mshapeKimberleyPilbarares <- coordinates.difference(mshapeKimberleyres, mshapePilbarares, type = "spherical")
 
 
-## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences
+## Plot each individual pair of pairwise differences relative to all the pairs of pairwise differences (absolute color range from 0 to maximum shape change in all pairwise differences) (Figure 2)
+
 procrustes.var.plot(mshapeGrooteres, mshapeKimberleyres, col = list(grDevices::heat.colors, "black"), col.val =  mshapeGrootekimberleyres[[1]][,"radius"], pt.size = 0.8, col.range = c(0, 0.0031))
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeGrootekimberleyres", fmt = "png")
@@ -566,56 +580,7 @@ rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/Fig2_mshapeKimberleyPilbarares", fmt = "png")
 
 
-###Distribution map of specimens used in this study labelled by population###
-
-#extract map of Australia border points
-
-world_map <- map_data("world")
-australia <- subset(world_map, world_map$region=="Australia")
-australia
-
-#create a base plot with ggplot2
-
-p <- ggplot() + coord_fixed() +
-  xlab("") + ylab("")
-
-#Add map to base plot
-
-australia_messy <- p + geom_polygon(data=australia, aes(x=long, y=lat, group=group), 
-                                    colour="black", fill="white")
-
-australia_messy
-
-#clean up the map
-
-cleanup <- 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_rect(fill = 'white', colour = 'white'), 
-        axis.line = element_line(colour = "white"), legend.position="none",
-        axis.ticks=element_blank(), axis.text.x=element_blank(),
-        axis.text.y=element_blank())
-
-australia_clean <- australia_messy + cleanup
-
-australia_clean
-
-#plot data points in map
-
-australiamap_data <- 
-  australia_clean+
-  geom_point(data=Dhalldataminusisland, 
-             aes(x=Longitude, y=Latitude, fill =Population)
-            ,pch=21, size=7, alpha=I(0.7))+
-  theme(legend.position = c(1,0.8), legend.justification = c(0,1), legend.key = element_blank(), legend.title = element_text(size = 20),
-        legend.text = element_text(size = 18))+
-    labs(fill="Population")
-
-
-australiamap_data
-
-
-#######################################################################################
-#######################################################################################
+###Distribution map of specimens used in this study labelled by population (Figure 2)
 
 library(ggplot2)
 library(ggmap)
@@ -646,7 +611,6 @@ map2 <-
 map2
 north2 (map2, .15, .8, scale = 0.2, symbol = 1)
 
-###FIX ZOOM<, LAT AND LON LIMIT, AND LETTERS SHOWN IN MAP (OR DIFFERENT MAPTYPE)
 ```
 
 ```{r sexual dimorphism and allometry, data preparation of size-corrected shape, include=TRUE}
@@ -676,22 +640,22 @@ summary(PCAsex)
 plot(PCAsex$pc.scores[,1], PCAsex$pc.scores[,2], bg = gdfsex$Sex, pch = 21, cex = 2, asp = T)
 legend("bottomright", legend=unique(gdfsex$Sex), pch=19, col=unique(gdfsex$Sex), cex=0.75)
 
-#Are sexes different in shape?
+#Are sexes different in shape? (Table 1)
 
 fit.shapesex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
 summary(fit.shapesex)
 
-#Is there a common allometry or are there unique allometries across sexes?
+#Is there a common allometry or are there unique allometries across sexes? (Table 1)
 
 fit.sex.uni <- procD.lm(f1 = coords~Csize*Sex, data = gdfsex, effect.type = "F")
 summary(fit.sex.uni)
 
-#Are there shape differences between sexes there are after correcting for size?
+#Are there shape differences between sexes there are after correcting for size? (Table 1)
 
 fit.sex <- procD.lm(f1 = coords~Csize+Sex, data = gdfsex, effect.type = "F")
 summary(fit.sex)
 
-#Are sexes different in Centroid Size (proxy for size)?
+#Are sexes different in Centroid Size (proxy for size)? (Table 1)
 
 lmsizesex <- lm(gdfsex$Csize~gdfsex$Sex)
 anova(lmsizesex)
@@ -749,16 +713,16 @@ procrustes.var.plot(mshapefemaleres, mshapemaleres, col = list(grDevices::heat.c
 rgl.viewpoint(180, -90, fov = 0, zoom = 0.5)
 rgl.snapshot("C:/Users/pietro/Desktop/Pietro/Projects/Viacavaetal_Dhallucatus/Analysis/Figures/SuppFig5_sexshapechanges_res", fmt = "png")
 
+
 ###POPULATION ANALYSIS OF ALLOMETRY###
 
-
-#Is there allometry in the entire dataset and how much?
+#Is there allometry in the entire dataset and how much? (Table 1)
 
 fit.size <- procD.lm(f1 = coords~Csize, data = gdfhallucatusminusisland, print.progress = FALSE)
 fit.size.plot <- plotAllometry(fit.size, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
 anova(fit.size)
 
-#Figure 3: Allometry plot, centroid size (proxy for body size) vs shape score
+#Figure 4: Allometry plot,  shape score vs centroid size (proxy for body size)
 
 Population <- gdfhallucatusminusisland$Population
 Sex <- gdfhallucatusminusisland$Sex
@@ -771,7 +735,8 @@ plotallom <- ggplot(dataallometryplot, aes(x=fit.size.plot.size.var, y=fit.size.
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.text = element_text(size = 25), legend.title = element_text(size = 25), axis.title.x = element_text(size = 25), axis.title.y = element_text(size = 25), axis.text = element_text(size = 20), legend.justification = "center")
 
 plot(plotallom)
-#unique allometries by population?
+
+#unique allometries by population? (Table 1)
 
 fit.size.uni <- procD.lm(f1 = coords~Csize*Population, data = gdfhallucatusminusisland, print.progress = FALSE, effect.type = "F")
 plotAllometry(fit.size.uni, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
@@ -779,7 +744,7 @@ anova(fit.size.uni)
 
 
 
-#common allometry across all populations, allometry-corrected shape differences between populations?
+#common allometry across all populations, allometry-corrected shape differences between populations? (Table 1)
 
 fit.size.common<- procD.lm(f1 = coords~Csize+Population, data = gdfhallucatusminusisland, print.progress = FALSE)
 plotAllometry(fit.size.common, size = gdfhallucatusminusisland$Csize, logsz = FALSE, method = "RegScore", pch = 19, col = as.numeric(gdfhallucatusminusisland$Population))
@@ -796,7 +761,9 @@ legend("bottomright", legend=unique(gdfhallucatusminusisland$Sex), pch=19, col=u
 
 
 ```
-```{r morpological disparity differences between island populations and mainland populations and between populations, include=TRUE}
+```{r morpological disparity differences between populations, between sexes, and between island and mainland populations, include=TRUE}
+
+#morpological disparity differences between populations (Supplementary Table 3)
 
 fitpop <- procD.lm(gpadhallminusisland$coords~Dhalldataminusisland$Population, iter = 999, effect.type = "F")
 
@@ -808,12 +775,7 @@ PWpop <- pairwise(fitpop, groups = gdfhallucatusminusisland$Population)
 PWpop.sum <- summary(PWpop, test.type = "var")
 PWpop.sum$summary.table
 
-PWpop.pvals <- PWpop.sum$pairwise.tables$P[c(2:5,8:10,14:15,20)]
-PWpop.pvals.adj <- p.adjust(PWpop.pvals, "bonferroni")
-PWpop.pvals.adj
-
-#sumPW1.var <- summary(PW1, test.type = "var", confidence = 0.95, stat.table = FALSE)
-#sumPW1.var
+#morphological disparity differences between sexes
 
 fitsex <- procD.lm(coords~Sex, data = gdfsex, effect.type = "F")
 
@@ -825,7 +787,7 @@ PWsex <- pairwise(fitsex, groups = gdfsex$Sex)
 PWsex.sum <- summary(PWsex, test.type = "var")
 PWsex.sum$summary.table
 
-
+#morphological disparity differences between island and mainland individuals
 
 fitisl <- procD.lm(gpahallucatus$coords~Dhallucatusdata$Island_Mainland, iter = 999, effect.type = "F")
 
@@ -889,8 +851,6 @@ clim.rda.shape<-vegan::rda(mymat~matprectemp[,c(1:2)]+Condition(spat.data)+Condi
 
 size.rda.shape<-vegan::rda(mymat~matCsizemain+Condition(spat.data)+Condition(matprectemp[,c(1:2)]))
 
-
-
 anova(full_rda)
 RsquareAdj(full_rda)
 
@@ -914,22 +874,9 @@ RsquareAdj(Egeo)
 Ecsize<-vegan::rda(mymat~matCsizemain)
 anova(Ecsize)
 RsquareAdj(Ecsize)
+```
 
-#variation partitioning model for size
-
-
-matCsizemain <- gpamainland$Csize
-
-mod<-varpart(matCsizemain,~spat.data, ~matprectemp[,c(1:2)])
-
-showvarparts(3, bg = c("blue", "red"), Xnames=c("Geography","Climate"), cex = 2, id.size = 2)
-plot(mod, bg = c("blue", "red"), Xnames=c("Geography","Climate"), cex = 2, id.size = 2)
-
-full_rda<-vegan::rda(matCsizemain~spat.data+matprectemp[,c(1:2)])### full model
-anova(full_rda)
-
-
-
+``` {r phenograms, include = TRUE}
 
 #Build phenograms based on Euclidean distances
 CVAquollspops <- CVA(gdfhallucatusminusisland$coords, groups = gdfhallucatusminusisland$Population, weighting = TRUE, plot = TRUE, rounds = 100)
@@ -1028,6 +975,8 @@ plot(cluster,hang=0.1)
 
 ``` {r boxplot figure, include = TRUE}
 
+#boxplot of centroid size for island and mainland individuals
+
 df.hallucatusislmain <- data.frame(gdfhallucatus$Csize, gdfhallucatus$main_island)
 
 islmainbplot <- ggplot(df.hallucatusislmain, 
@@ -1041,6 +990,8 @@ islmainbplot <- ggplot(df.hallucatusislmain,
   theme_classic() +
   theme(legend.position = "none", axis.text = element_text(size = 25), axis.title.y = element_text(size=25))
 
+
+#boxplot of centroid size for males and females
 
 df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
 
@@ -1056,6 +1007,8 @@ Sexbplot <- ggplot(df.hallucatussex,
   theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank())
 
 
+#boxplot of centroid size for populations
+
 df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
 
 Popbplot <-   ggplot(df.hallucatuspop, 
@@ -1069,6 +1022,7 @@ Popbplot <-   ggplot(df.hallucatuspop,
   theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank()) +
   scale_x_discrete(labels=c("Groote" = "GTE", "Kimberley" = "KIM", "Pilbara"="PIL", "Queensland"="QLD", "Northern Territory"="NT"))
 
+#multiple boxplot of centroid size (Figure 3)
 
 multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
   require(grid)
