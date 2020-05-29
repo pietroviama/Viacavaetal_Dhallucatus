@@ -880,97 +880,28 @@ RsquareAdj(Ecsize)
 
 #Build phenograms based on Euclidean distances
 CVAquollspops <- CVA(gdfhallucatusminusisland$coords, groups = gdfhallucatusminusisland$Population, weighting = TRUE, plot = TRUE, rounds = 100)
-plot(CVAquollspops$CVscores[,1:2], bg=gdfhallucatusminusisland$Population, pch=21, typ="p", asp = 1)
-gpadhallminusisland$procD
-Euclidist_quollspops <- CVAquollspops$Dist$GroupdistEuclid
 
-Euclidist <- dist(gpadhallminusisland$procD, method = "euclidean")
+Euclidist_quollspops <- CVAquollspops$Dist$GroupdistEuclid
+the.cluster.means <- hclust(Euclidist_quollspops, method = "average")
+plot(the.cluster.means)
+
+
+Euclidist_inds <- dist(gpadhallminusisland$procD, method = "euclidean")
+the.cluster.inds <- as.dendrogram(hclust(Euclidist_inds, method = "average"))
 
 colspop <- rainbow(length(levels(gdfhallucatusminusisland$Population)))
 library(dendextend)
-ClustLab <- paste(gdfhallucatusminusisland$Population)
-plotColoredClusters(the.cluster, labs = ClustLab, cols = colspop)
 
 population <- factor(gdfhallucatusminusisland$Population)
 n_population <- length(unique(population))
 cols_4 <- colorspace::rainbow_hcl(n_population)
 col_population <- cols_4[population]
 
-labels_colors(the.cluster) <- col_population[order.dendrogram(the.cluster)]
+labels_colors(the.cluster.inds) <- col_population[order.dendrogram(the.cluster.inds)]
 
 par(cex=2)
-plot(the.cluster, main="", xlab="")
+plot(the.cluster.inds, main="", xlab="")
 
-
-legend("topleft", legend = levels(population), fill = cols_4)
-
-the.cluster <- as.dendrogram(hclust(Euclidist, method = "average"))
-dend2 <- color_labels(the.cluster, col = col_population, labels = labels(the.cluster)[gdfhallucatusminusisland$Population])
-plot(dend2)
-plot(the.cluster)
-labels_colors(the.cluster)
-plot(nj(Euclidist_quollspops),main="Neighbor Joining") 
-plot(upgma(Euclidist_quollspops),main="UPGMA")
-
-
-
-clusteronmeans<-function(x,group,method="euclidean",FUN=mean,nj=F,title=NULL,tip.color=1,cex=2){
- library(MASS)
- library(car)
- library(phangorn)
- x<-as.matrix(x)
- group2<-group[order(group)]
- if(ncol(x)>2){x2<-x[order(group),]}else{x2<-x[order(group)]}
- x3<-aggregate(x2,by=list(group2),FUN=FUN)
- rownames(x3)<-levels(group2)
- plot(upgma(as.matrix(dist(x3[,-1,drop=F],method=method))),tip.color=tip.color,cex=cex)
- par(new=T)
- if(is.null(title)==T){title(main="upgma")}else{title(main=title)}
- if(nj==T){
-x11()
- plot(nj(as.matrix(dist(x3[,-1,drop=F],method=method))),,tip.color=tip.color,cex=cex)
- par(new=T)
- if(is.null(title)==T){title(main="neighbor-joining")}else{title(main=title)}
-}
- print("distances")
- as.matrix(dist(x3[,-1,drop=F],method=method))
-}
-
-popclustupgma <- clusteronmeans(gpadhallminusisland$procD, group = gdfhallucatusminusisland$Population)
-
-
-popclustnj <- clusteronmeans(gpamainland$procD, group = gdfmainland$Population, nj = T)
-
-procD.mat <- as.matrix(gpadhallminusisland$procD)
-dendboot <- aboot(procD.mat)
-
-meansdistmat <- as.matrix(Euclidist_quollspops)
-dendboot <- aboot(meansdistmat, )
-
-
-# compute the pairwise Euclidean distances between specimens
-D1<-dist(gpadhallminusisland$procD, "euclidean")
-# perform the clustering using UPGMA ("average"
-cluster<-hclust(D1, method="average")
-# compute the distances along the branches
-D2<-cophenetic(cluster)
-# compute the correlation
-cor(D1,D2)
-# draw the dendrogram
-plot(cluster,hang=0.1)
-
-library(ape)
-D2<-fastme.bal(Euclidist_quollspops)
-plot(D2)
-
-# perform the clustering using UPGMA ("average"
-cluster<-hclust(Euclidist_quollspops, method="average")
-# compute the distances along the branches
-D2<-cophenetic(cluster)
-# compute the correlation
-cor(D1,D2)
-# draw the dendrogram
-plot(cluster,hang=0.1)
 ```
 
 ``` {r boxplot figure, include = TRUE}
