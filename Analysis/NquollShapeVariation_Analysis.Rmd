@@ -612,6 +612,93 @@ north2 (map2, .15, .8, scale = 0.2, symbol = 1)
 
 ```
 
+``` {r boxplot figure, include = TRUE}
+
+#Figure 3: boxplot of centroid size for island and mainland individuals
+
+df.hallucatusislmain <- data.frame(gdfhallucatus$Csize, gdfhallucatus$main_island)
+
+islmainbplot <- ggplot(df.hallucatusislmain, 
+       aes(x = gdfhallucatus.main_island, 
+           y = gdfhallucatus.Csize, 
+           fill = gdfhallucatus.main_island)) +
+  scale_fill_manual(values = c("gray88", "gray62")) +
+  labs(x= NULL, y= "Centroid size",
+       title= NULL) +
+  geom_boxplot() +
+  geom_point() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.title.y = element_text(size=25))
+
+
+#boxplot of centroid size for males and females
+
+df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
+
+Sexbplot <- ggplot(df.hallucatussex, 
+                       aes(x = gdfsex.Sex, 
+                           y = gdfsex.Csize, 
+                           fill = gdfsex.Sex)) +
+  scale_fill_manual(values = c("gray88", "gray62")) +
+  labs(x= NULL, y= NULL,
+       title= NULL) +
+  geom_boxplot() +
+  geom_point() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank())
+
+
+#boxplot of centroid size for populations
+
+df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
+
+Popbplot <-   ggplot(df.hallucatuspop, 
+                   aes(x = reorder(gdfhallucatusminusisland.Population, gdfhallucatusminusisland.Csize, FUN = median), 
+                       y = gdfhallucatusminusisland.Csize, 
+                       fill = gdfhallucatusminusisland.Population)) +
+    labs(x= NULL, y= NULL,
+       title= NULL) +
+  geom_boxplot() +
+geom_point() +
+  theme_classic() +
+  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank()) +
+  scale_x_discrete(labels=c("Groote" = "GTE", "Kimberley" = "KIM", "Pilbara"="PIL", "Queensland"="QLD", "Northern Territory"="NT"))
+
+#multiple boxplot of centroid size (Figure 3)
+
+multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
+  require(grid)
+  
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  if (is.null(layout)) {
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots == 1) {
+    print(plots[[1]])
+    
+  } else {
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    for (i in 1:numPlots) {
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+multiplot(islmainbplot, Sexbplot, Popbplot, cols = 3)
+
+
+```
+
 ```{r sexual dimorphism and allometry, data preparation of size-corrected shape, include=TRUE}
 
 #first drop unknown sex and redo gpa
@@ -904,89 +991,3 @@ plot(the.cluster.inds, main="", xlab="")
 
 ```
 
-``` {r boxplot figure, include = TRUE}
-
-#boxplot of centroid size for island and mainland individuals
-
-df.hallucatusislmain <- data.frame(gdfhallucatus$Csize, gdfhallucatus$main_island)
-
-islmainbplot <- ggplot(df.hallucatusislmain, 
-       aes(x = gdfhallucatus.main_island, 
-           y = gdfhallucatus.Csize, 
-           fill = gdfhallucatus.main_island)) +
-  scale_fill_manual(values = c("gray88", "gray62")) +
-  labs(x= NULL, y= "Centroid size",
-       title= NULL) +
-  geom_boxplot() +
-  geom_point() +
-  theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 25), axis.title.y = element_text(size=25))
-
-
-#boxplot of centroid size for males and females
-
-df.hallucatussex <- data.frame(gdfsex$Csize, gdfsex$Sex)
-
-Sexbplot <- ggplot(df.hallucatussex, 
-                       aes(x = gdfsex.Sex, 
-                           y = gdfsex.Csize, 
-                           fill = gdfsex.Sex)) +
-  scale_fill_manual(values = c("gray88", "gray62")) +
-  labs(x= NULL, y= NULL,
-       title= NULL) +
-  geom_boxplot() +
-  geom_point() +
-  theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank())
-
-
-#boxplot of centroid size for populations
-
-df.hallucatuspop <- data.frame(gdfhallucatusminusisland$Csize, gdfhallucatusminusisland$Population)
-
-Popbplot <-   ggplot(df.hallucatuspop, 
-                   aes(x = reorder(gdfhallucatusminusisland.Population, gdfhallucatusminusisland.Csize, FUN = median), 
-                       y = gdfhallucatusminusisland.Csize, 
-                       fill = gdfhallucatusminusisland.Population)) +
-    labs(x= NULL, y= NULL,
-       title= NULL) +
-  geom_boxplot() +
-geom_point() +
-  theme_classic() +
-  theme(legend.position = "none", axis.text = element_text(size = 25), axis.text.y = element_blank()) +
-  scale_x_discrete(labels=c("Groote" = "GTE", "Kimberley" = "KIM", "Pilbara"="PIL", "Queensland"="QLD", "Northern Territory"="NT"))
-
-#multiple boxplot of centroid size (Figure 3)
-
-multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
-  require(grid)
-  
-  plots <- c(list(...), plotlist)
-  
-  numPlots = length(plots)
-  
-  if (is.null(layout)) {
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-  
-  if (numPlots == 1) {
-    print(plots[[1]])
-    
-  } else {
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-    
-    for (i in 1:numPlots) {
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-      
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
-
-multiplot(islmainbplot, Sexbplot, Popbplot, cols = 3)
-
-
-```
